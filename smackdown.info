@@ -1,0 +1,4 @@
+; $Id$
+name = Smackdown
+description = Allows X vs. Y kind of pairings, and allows users to vote on their favorite.
+dependencies = votingapi

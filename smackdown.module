@@ -1,0 +1,829 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Smackdown module: pit two nodes against one another and vote on the winner.
+ * Choose what content type to reference in the smackdown content type settings.
+ */
+
+/**
+ * Implementation of hook_help().
+ */
+function smackdown_help($section) {
+  switch ($section) {
+    case 'admin/help#smackdown':
+      return t('ADMIN-HELP-TEXT');
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function smackdown_node_info() {
+  return array(
+    'smackdown' => array(
+      'name' => t('Smackdown'),
+      'module' => 'smackdown',
+      'description' => t("A smackdown pairs two things together and lets users vote on their favorite."),
+    )
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ *
+ * @todo:
+ *   create permission for all node types to be referenced as a smackdown
+ */
+function smackdown_perm() {
+  return array('create smackdown', 'edit own smackdown');
+}
+
+/**
+ * Implementation of hook_access().
+ */
+function smackdown_access($op, $node) {
+  global $user;
+
+  if ($op == 'create') {
+    // Only users with permission to do so may create this node type.
+    return user_access('create smackdown');
+  }
+
+  // Users who create a node may edit or delete it later, assuming they have the
+  // necessary permissions.
+  if ($op == 'update' || $op == 'delete') {
+    if (user_access('edit own smackdown') && ($user->uid == $node->uid)) {
+      return TRUE;
+    }
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function smackdown_menu($may_cache) {
+    
+  $items = array();
+  
+  if ($may_cache) {
+    $items[] = array(
+      'path' => 'smackdown',
+      'callback' => 'smackdown_page',
+      'type' => MENU_CALLBACK,
+      'access' => user_access('create smackdown'),
+    );
+  
+    $items[] = array(
+      'path' => 'smackdown/autocomplete',
+      'title' => t('Smackdown autocomplete'),
+      'callback' => 'smackdown_autocomplete',
+      'type' => MENU_CALLBACK,
+      'access' => user_access('create smackdown'),
+    );
+    
+    $items[] = array(
+      'path' => 'smackdown/taxonomy/js',
+      'callback' => 'smackdown_taxonomy_js',
+      'type' => MENU_CALLBACK,
+      'access' => true,
+      'access' => user_access('create smackdown'),
+    );
+    
+    $items[] = array(
+      'path' => 'smackdown/standings',
+      'callback' => 'smackdown_standings_page',
+      'type' => DEFAULT_LOCAL_TASK,
+      'access' => user_access('create smackdown'),
+    );
+    
+    $enabled = variable_get('smackdown_enabled_smackdown', array());
+    if ($enabled) {
+      foreach ($enabled as $type) {
+        $items[] = array(
+          'path' => 'smackdown/'. $type,
+          'title' => t($type .' Smackdowns'),
+          'type' => MENU_LOCAL_TASK,
+          'access' => user_access('create smackdown'),
+        );
+        $items[] = array(
+          'path' => 'smackdown/standings/'. $type,
+          'title' => t($type .' Standings'),
+          'type' => MENU_LOCAL_TASK,
+          'access' => user_access('create smackdown'),
+        );
+      }
+    }
+    
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_form_alter
+ *
+ * Adding settings to the smackdown content type. Choose which content type to reference.
+ */
+function smackdown_form_alter($form_id, &$form) {
+  if ($form_id == 'node_type_form' && isset($form['identity']['type']) && $form['#node_type']->type == 'smackdown') {
+    $types = node_get_types('types');
+    foreach ($types as $key => $type) {
+     if ($key != 'smackdown') {
+       $options[$key] = $type->type;
+     }
+    }
+
+    $form['workflow']['smackdown_enabled'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Use Smackdown on'),
+      '#options' => $options,
+      '#default_value' => variable_get('smackdown_enabled_smackdown', 0),
+    );
+  }
+}
+
+/**
+ * Implementation of hook_form().
+ *
+ * This adds two nodereference fields and a node-type selector to our content type submission.
+ */
+function smackdown_form(&$node) {
+  drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
+
+  // Set the expected smackdown type, or take one from the url
+  // (i.e. node/add/smackdown/video). Get the type and validate it.
+  $node_ref_type = isset($node->node_ref_type) ? $node->node_ref_type : arg(3);
+  $type_info = node_get_types('type', $node_ref_type);
+  $node_ref_type = isset($type_info->type) ? $type_info->type : FALSE;
+  $node_ref_type_name = isset($type_info->type) ? $type_info->type : FALSE;
+
+  // Get the smackdown type name.
+  $smackdown_type = node_get_types('name', $node->type);
+
+  // Set page title.
+  if ($node_ref_type_name) {
+    drupal_set_title(((arg(1) == 'add') ? t('Submit') : t('Edit')) .' '. $node_ref_type_name .' '. $smackdown_type);
+  }
+
+  $node_ref_1_human = ($node->node_ref_1) ? smackdown_encode($node->node_ref_1) : '';
+  $node_ref_2_human = ($node->node_ref_2) ? smackdown_encode($node->node_ref_2) : '';
+  
+  $types = node_get_types('types');
+  if (count(variable_get('smackdown_enabled_smackdown', null)) < 1) {
+    drupal_set_message(l('Please choose a content type to enable.', 'admin/content/types/smackdown'), 'error');
+  }
+  else {
+    foreach (variable_get('smackdown_enabled_smackdown', array()) as $key => $value) {
+      $enabled[$value] = $value;
+    }
+    $enabled_types = array_intersect_key($types, $enabled);
+    
+    foreach ($enabled_types as $key => $type) {
+      if ($key != 'smackdown') {
+        $options[$key] = $type->type;
+      }
+    }
+    $options[0] = t('<none>');
+    asort($options);
+    
+    // Now we define the form elements spcific to our content type
+    $form['node_ref_type'] = array(
+      '#type' => $node_ref_type ? 'hidden' : 'select',
+      '#title' => t('Smackdown Type'),
+      '#options' => $options,
+      '#default_value' => $node_ref_type,
+      '#weight' => -10,
+      '#required' => TRUE,
+    );
+  }
+
+  $form['smackdown_autocomplete'] = array(
+    '#type' => 'hidden',
+    '#value' => url('smackdown/autocomplete', NULL, NULL, TRUE),
+  );
+
+  $form['smackdown_taxonomy_filter'] = array(
+    '#prefix' => '<div id="smackdown-taxonomy-filter">',
+    '#suffix' => '</div>',
+    '#value' => $node_ref_type ? smackdown_taxonomy_filter($node_ref_type) : '&nbsp;',
+  );
+
+  $form['node_ref_1'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Contestant #1'),
+    '#autocomplete_path' => 'smackdown/autocomplete',
+    '#required' => true,
+    '#description' => t('Type the name of a @type.', array('@type' => $node_ref_type_name ? drupal_strtolower($node_ref_type_name) : t('contestant'))),
+    '#default_value' => $node_ref_1_human,
+  );
+
+  $form['node_ref_2'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Contestant #2'),
+    '#autocomplete_path' => 'smackdown/autocomplete',
+    '#required' => true,
+    '#description' => t('Type the name of a @type.', array('@type' => $node_ref_type_name ? drupal_strtolower($node_ref_type_name) : t('contestant'))),
+    '#default_value' => $node_ref_2_human,
+  );
+
+  return $form;
+
+}
+
+/**
+ * check to see if there is a duplicate smackdown combination already created
+ *
+ * @return Boolean true or false
+ *
+ * @unfinished
+ */
+function smackdown_dup_check($node) {
+  // retreive all smackdowns
+  $result = db_query("SELECT * FROM {smackdowns}");
+  while ($result = db_fetch_object($result)) {
+  	$refs[] = array(
+      'ref1' => $result->node_ref_1,
+      'ref2' => $result->node_ref_2,
+    );
+  }
+
+}
+
+/**
+ * get a list of all created smackdowns
+ *
+ * @return
+ *   an array of smackdown node objects
+ */
+function smackdown_get_smackdowns($content_type) {
+  if ($content_type) {
+    // find all smackdowns of the same content type
+    $results = db_query("SELECT s.nid FROM smackdown s INNER JOIN node n ON s.nid = n.nid WHERE s.node_ref_type = '%s' AND n.status = 1", $content_type);
+    while ($row = db_fetch_object($results)) {
+      $nids[] = $row->nid;
+    }
+  }
+  else {
+    drupal_set_message("no content type given");
+  }
+  return $nids;
+}
+
+/**
+ * Implementation of hook_submit().
+ * Set a default title for smackdowns.
+ */
+function smackdown_submit(&$node){
+  $node_ref_1 = smackdown_cleanse_ref($node->node_ref_1);
+  $node_ref_2 = smackdown_cleanse_ref($node->node_ref_2);
+
+  $title1  = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", $node_ref_1));
+  $title2  = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", $node_ref_2));
+
+  $node->title = $title1 .' vs. '. $title2;
+}
+
+/**
+ * Implementation of hook_insert().
+ */
+function smackdown_insert(&$node) {
+  $node->node_ref_1 = smackdown_cleanse_ref($node->node_ref_1);
+  $node->node_ref_2 = smackdown_cleanse_ref($node->node_ref_2);
+  db_query("INSERT INTO {smackdown} (vid, nid, node_ref_1, node_ref_2, node_ref_type) VALUES (%d, %d, %d, %d, '%s')", $node->vid, $node->nid, $node->node_ref_1, $node->node_ref_2, $node->node_ref_type);
+}
+
+/**
+ * Implementation of hook_update().
+ */
+function smackdown_update(&$node) {
+  if ($node->revision) {
+    smackdown_insert($node);
+  }
+  else {
+    $node->node_ref_1 = smackdown_cleanse_ref($node->node_ref_1);
+    $node->node_ref_2 = smackdown_cleanse_ref($node->node_ref_2);
+    db_query("UPDATE {smackdown} SET node_ref_1 = %d, node_ref_2 = %d, node_ref_type = '%s' WHERE vid = %d", $node->node_ref_1, $node->node_ref_2, $node->node_ref_type, $node->vid);
+  }
+}
+
+/**
+ * Implementation of hook_delete().
+ */
+function smackdown_delete($node) {
+  db_query('DELETE FROM {smackdown} WHERE nid = %d', $node->nid);
+}
+
+/**
+ * Implementation of hook_load().
+ */
+function smackdown_load($node) {
+  $additions = db_fetch_object(db_query('SELECT s.*, n1.title as node_ref_1_title, n2.title as node_ref_2_title FROM {smackdown} s INNER JOIN {node} n1 ON s.node_ref_1 = n1.nid INNER JOIN {node} n2 ON s.node_ref_2 = n2.nid WHERE s.vid = %d', $node->vid));
+  $additions = smackdown_results($additions);
+  return $additions;
+}
+
+function smackdown_view($node, $teaser = FALSE, $page = FALSE) {
+  $node->content['node_refs'] = array(
+    '#value' => theme('smackdown_refs', $node),
+    '#weight' => 1,
+  );
+
+  // we need to find out what the previous node voted on was
+	 $user_log = (count($_SESSION['smackdown_user_log']) > 1) ? array_reverse($_SESSION['smackdown_user_log']) : $_SESSION['smackdown_user_log'];
+	 if ($user_log) {
+	   $prev_node = node_load($user_log[0]);
+	   smackdown_results($prev_node);
+	 }
+  
+		$node->content['smackdown_widget'] = array(
+    '#value' => smackdown_widget_form($node),
+    '#weight' => 5,
+  );
+	 	 
+  if ($prev_node) {
+	   $node->content['results'] = array(
+	  	  '#value' => theme('smackdown_results', $node, $prev_node),
+	  	  '#weight' => 6,
+	   );
+	 }
+  
+  return $node;
+}
+
+function theme_smackdown_refs($node) {
+  $node_ref_1 = node_load($node->node_ref_1);
+  $node_ref_2 = node_load($node->node_ref_2);
+  $output  = "<div class='smackdown ref_1'>". node_view($node_ref_1, true, false, false) ."</div>";
+  $output .= "<div class='smackdown ref_2'>". node_view($node_ref_2, true, false, false) ."</div>";
+  return $output;
+}
+
+/**
+ * Function to get the results of the previously voted upon node
+ */
+function smackdown_results($node) {
+  if ($node) {
+    $refs = array($node->node_ref_1, $node->node_ref_2);
+    $results = votingapi_get_voting_results('node', $node->nid); // for some reason this returns results in opposite order    
+    
+    if (empty($results)) {
+      // format the results as being empty
+      $node->results[$node->node_ref_1] = array(
+        '#value' => 0,
+        '#title' => $node->node_ref_1_title,
+      );
+      $node->results[$node->node_ref_2] = array(
+        '#value' => 0,
+        '#title' => $node->node_ref_2_title,
+      );
+    }
+    else {
+      if ($results[0]->function == $refs[0]) {
+        // first result corresponds to the first node_ref
+        $node_ref_1 = node_load($results[0]->function);
+        
+        // append the results to the node object
+        $node->results[$node_ref_1->nid] = array(
+          '#value' => $results[0]->value,
+          '#title' => $node_ref_1->title,
+        );
+        
+        // check to see if there is a result for the second node_ref
+        if ($results[1]) {
+          $node_ref_2 = node_load($results[1]->function);
+          $node_ref_2->value = $results[1]->value;
+        }
+        else {
+          $node_ref_2 = node_load($refs[1]);
+          $node_ref_2->value = 0;
+        }
+        $node->results[$node_ref_2->nid] = array(
+          '#value' => $node_ref_2->value,
+          '#title' => $node_ref_2->title,
+        );
+      }
+      else {
+        // first result corresponds to the second node_ref
+        $node_ref_2 = node_load($results[0]->function);
+        
+        // append the results to the node object
+        $node->results[$node_ref_2->nid] = array(
+          '#value' => $results[0]->value,
+          '#title' => $node_ref_2->title,
+        );
+        
+        // check to see if there is a result for the second node_ref
+        if ($results[1]) {
+          $node_ref_1 = node_load($results[1]->function);
+          $node_ref_1->value = $results[1]->value;
+        }
+        else {
+          $node_ref_1 = node_load($refs[0]);
+          $node_ref_1->value = 0;
+        }
+        $node->results[$node_ref_1->nid] = array(
+          '#value' => $results[1]->value,
+          '#title' => $node_ref_1->title,
+        );
+      }
+    }
+  }
+  return $node;
+}
+
+function theme_smackdown_results($node, $prev_node) {
+	 // turn the results into a percentage
+	 $votes = $prev_node->results[$prev_node->node_ref_1]['#value'] + $prev_node->results[$prev_node->node_ref_2]['#value'];
+	 $ref_1_percentage = round(($prev_node->results[$prev_node->node_ref_1]['#value'] / $votes) * 100) .'%';
+	 $ref_2_percentage = round(($prev_node->results[$prev_node->node_ref_2]['#value'] / $votes) * 100) .'%';
+	 $output = "<span class='smackdown_results_title'>Previous Smackdown: </span>";
+  $output .= "<span class='smackdown_results_1'>". l($prev_node->results[$prev_node->node_ref_1]['#title'] .' ', 'node/'. $prev_node->node_ref_1) . $ref_1_percentage ."</span> | ";
+  $output .= "<span class='smackdown_results_2'>". l($prev_node->results[$prev_node->node_ref_2]['#title'] .' ', 'node/'. $prev_node->node_ref_2) . $ref_2_percentage ."</span>";
+  $output .= "<hr/>";
+  $output .= l("Make a Smackdown", 'node/add/smackdown') .' | '. l('View Standings Chart', 'smackdown/standings');
+  return $output;
+}
+
+/**
+ * Implementation of hook_validate()
+ */
+function smackdown_validate(&$node) {
+
+	$node_ref_1_human = $node->node_ref_1;
+	$node_ref_1_machine = smackdown_cleanse_ref($node->node_ref_1);
+
+	$node_ref_2_human = $node->node_ref_2;
+	$node_ref_2_machine = smackdown_cleanse_ref($node->node_ref_2);
+
+  if (empty($node->node_ref_1)) {
+    form_set_error('node_ref_1', t("You must choose a node."));
+  }
+  elseif (empty($node->node_ref_2)) {
+    form_set_error('node_ref_2', t("You must choose a node."));
+  }
+  else {
+
+	  // make sure actual nids entered exist
+	  if (!db_result(db_query("SELECT nid FROM {node} WHERE nid = %d", $node_ref_1_machine))) {
+	    form_set_error('node_ref_1', t("That id does not exist, make sure you choose from the list."));
+	  }
+	  if (!db_result(db_query("SELECT nid FROM {node} WHERE nid = %d", $node_ref_2_machine))) {
+	    form_set_error('node_ref_2', t("That id does not exist, make sure you choose from the list."));
+	  }
+
+  	// make sure the node refs are not the same
+    if ($node_ref_1_machine == $node_ref_2_machine) {
+      form_set_error('node_ref_2', t("This node cannot be the same as the first"));
+    }
+
+    // make sure this particular pairing of videos does not already exist
+    if (arg(2) != 'edit') {
+      $dup = db_query("SELECT * FROM {smackdown} WHERE (node_ref_1 = %d AND node_ref_2 = %d) OR (node_ref_1 = %d AND node_ref_2 = %d)", $node_ref_1_machine, $node_ref_2_machine, $node_ref_2_machine, $node_ref_1_machine);
+      if (db_result($dup)) {
+        $duplicate = db_fetch_object($dup);
+        $refs = array('node_ref_1', 'node_ref_2');
+        form_set_error('node_ref_1', t("This particular smackdown already exists. "));
+        form_set_error('node_ref_2', t("Please change one of your choices or ". l("view the one", 'node/'. $duplicate->nid) ." that was already created."));
+      }
+    }
+  }
+
+}
+
+/**
+ * Function to autocomplete the node reference fields in our smackdown creation form. 
+ */
+function smackdown_autocomplete() {
+  $args = func_get_args();
+  $matches = array();
+  
+  // check size & set vars depending on size
+  switch(count($args)) {
+    case 1:
+      $string = $args[0];
+      $sql = "SELECT DISTINCT n.nid, n.title FROM {node} n WHERE n.title LIKE '%s%' AND n.status = 1";
+      $result = db_query($sql, $string);
+      while ($row = db_fetch_object($result)) {
+        $matches[$row->title .':['. $row->nid .']'] = $row->title;
+      }
+      break;
+    case 2:
+      $type = $args[0];
+      $string = $args[1];
+      $sql = "SELECT DISTINCT n.nid, n.title FROM {node} n WHERE n.title LIKE '%s%' AND n.type = '%s' AND n.status = 1";
+      $result = db_query($sql, $string, $type);
+      while ($row = db_fetch_object($result)) {
+        $matches[$row->title .':['. $row->nid .']'] = $row->title;
+      }      
+      break;
+    case 3:
+      $type = $args[0];
+      $tid = $args[1];
+      $string = $args[2];
+      $prev_matches = FALSE;
+      $sql = "SELECT DISTINCT n.nid, n.title FROM {node} n INNER JOIN {term_node} tn ON n.nid = tn.nid WHERE tn.tid = %d AND n.title LIKE '%s%' AND n.type = '%s' AND n.status = 1 ORDER BY n.title ASC";
+      if (strstr($tid, ',')) {
+        // multiple tids passed, split 'em up
+        $tids = explode(',', $tid);
+        foreach ($tids as $tid) {
+          $result = db_query($sql, $tid, $string, $type);
+          while ($row = db_fetch_object($result)) {
+            $new_matches[$row->title .':['. $row->nid .']'] = $row->title;
+          }
+          
+          if (!$prev_matches) {
+            $prev_matches = $new_matches;
+            unset($new_matches);
+          }
+          else {
+            // compare the previous matches to the current
+            $matches = array_intersect_key($new_matches, $prev_matches);
+            $prev_matches = $matches;
+          }
+        }
+      }
+      else {
+        $result = db_query($sql, $tid, $string, $type);  
+        while ($row = db_fetch_object($result)) {
+          $matches[$row->title .':['. $row->nid .']'] = $row->title;
+        }
+      }
+      break;
+  }
+  
+  drupal_set_header('text/javascript');
+  print drupal_to_js($matches);
+  exit();
+}
+
+function smackdown_cleanse_ref($ref) {
+  if (!is_numeric($ref)) {
+    $ref = explode(":[", $ref);
+    $ref = trim($ref[1], ']');
+  }
+  return $ref;
+}
+
+function smackdown_encode($value) {
+ 	$node = node_load($value);
+ 	return $node->title .':['. $value .']';
+}
+
+
+function smackdown_widget_form($node) {
+  return drupal_get_form('smackdown_form_widget', $node);
+}
+
+function smackdown_form_widget($node) {
+  $form['vote_ref_1'] = array(
+    '#type' => 'submit',
+    '#value' => $node->node_ref_1,
+    '#theme' => 'smackdown_vote_ref_1',
+  );
+
+  $form['vote_ref_2'] = array(
+    '#type' => 'submit',
+    '#value' => $node->node_ref_2,
+    '#theme' => 'smackdown_vote_ref_2',
+  );
+
+  $form['vote_refs'] = array(
+    '#type' => 'value',
+    '#value' => array('smackdown_nid' => $node->nid, 'ref_1' => $node->node_ref_1, 'ref_2' => $node->node_ref_2, 'ref_type' => $node->node_ref_type),
+  );
+
+  $form['#base'] = 'smackdown_form';
+
+  return $form;
+}
+
+function theme_smackdown_vote_ref_1($form) {
+  return '<input type="submit" class="form-submit" value="'. $form['#value'] .'" id="edit-vote-ref-1" name="op"/>';
+}
+
+function theme_smackdown_vote_ref_2($form) {
+  return '<input type="submit" class="form-submit" value="'. $form['#value'] .'" id="edit-vote-ref-1" name="op"/>';
+}
+
+function smackdown_form_widget_submit($form_id, $form_values) {
+  $nid = $form_values['vote_refs']['smackdown_nid'];
+  $content_type = $form_values['vote_refs']['ref_type'];
+  $value = $form_values['op'];
+  
+  if (is_numeric($nid) && is_numeric($value)) {
+
+    // Save voting results.
+    $results = votingapi_add_vote('node', $nid, $value, 'option', 'smackdown');
+
+    // cache
+    if (variable_get('votingapi_calculation_schedule', 'immediate') != 'cron') {
+      votingapi_recalculate_results('node', $nid);
+    }
+
+    // Set user session var to include this $nid
+    $_SESSION['smackdown_user_log'][] = $nid;
+
+    // go to the next smackdown
+    drupal_goto(smackdown_next($content_type));
+  }
+  return;
+}
+
+/**
+ * Menu callback to generate a smackdown viewing by taxonomy
+ * 
+ * @taxonomy_id
+ *   id of the taxonomy to remain within
+ */
+function smackdown_page($content_type) {
+	 global $conf;
+ 
+	 if (!$conf['smackdown_enabled_smackdown']) {
+	   drupal_set_message("You need to ". l("setup which content type to reference", 'admin/content/types/smackdown') .".");
+	   return '';
+	 }
+	 elseif (!$content_type) {
+    if (arg(1)) {
+      $content_type = arg(1);
+    }
+    else {
+      $content_type = $conf['smackdown_enabled_smackdown'];
+      $content_type = $content_type[0];
+    }
+	 }
+    // goto in a smackdown node
+		  drupal_goto(smackdown_next($content_type));
+ 
+}
+
+/**
+ * Function to determine what the next smackdown should be
+ *
+ * @content_type
+ *   type to remain within
+ * @return
+ *   url of the next smackdown node to show
+ */
+function smackdown_next($content_type) { 
+  $smackdown_diff = array();
+  
+  // get a list of all smackdowns the user has already voted upon
+  $smackdown_user_log = $_SESSION['smackdown_user_log'];
+
+  // get a list of all created smackdown nids
+  $nids = smackdown_get_smackdowns($content_type);
+  
+  // user has voted before?
+  if (empty($smackdown_user_log)) {
+    // show a random smackdown within the same type
+    $nid = array_rand($nids);
+    $smackdown_diff = $nid[0];
+  }
+  else {
+    // compare the list of smackdowns to what the user has already voted upon
+    if ($nids) {
+      $smackdown_diff = array_diff($nids, $smackdown_user_log);
+    }
+    
+    // are there any smackdowns left?
+    if (!$nids || !$smackdown_diff) {      
+      // ask user to create one if allowed
+      if (user_access("create smackdown")) {
+        drupal_set_message("All out of smackdowns, would you like to create one yourself?");
+      }
+      else {
+        drupal_set_message("Login to create additional smackdowns.");
+      }
+    } 
+  }
+
+  // TODO: theme error message output
+  if (empty($smackdown_diff)) {
+    return 'node/add/smackdown/'. $content_type;
+  }
+  else {
+  	 $smackdown_diff = array_values($smackdown_diff);
+    return 'node/'. $smackdown_diff[0];
+  }
+}
+
+/**
+ * menu callback for displaying an overview of all smackdwons within a taxonomy
+ * @taxonomy_id
+ *   id of the taxonomy to remain within
+ */
+function smackdown_standings_page($content_type) {
+  if (!$content_type) {    
+    // set to the first tab
+    foreach (variable_get('smackdown_enabled_smackdown', array()) as $type) {
+      drupal_goto('smackdown/standings/'. $type);
+    }
+  }
+  
+  // get a paged list of all smackdowns
+  $nids = smackdown_get_smackdowns($content_type);
+  if ($nids) {
+    foreach ($nids as $nid) {
+      $results[$nid] = smackdown_results(node_load($nid));
+    }
+  }
+  
+  // display
+  return theme('smackdown_standings', $results);
+}
+
+function theme_smackdown_standings($nodes) {
+  if (!empty($nodes)) {
+    foreach ($nodes as $node) {
+      if ($node->results[$node->node_ref_1]['#value'] != 0) {
+        $votes = $node->results[$node->node_ref_1]['#value'] + $node->results[$node->node_ref_2]['#value'];
+        $ref_1_percentage = round(($node->results[$node->node_ref_1]['#value'] / $votes) * 100) .'%';
+        $ref_2_percentage = round(($node->results[$node->node_ref_2]['#value'] / $votes) * 100) .'%';
+      }
+      else {
+        $ref_1_percentage = '0%';
+        $ref_2_percentage = '0%';
+      }
+      $items[] = $ref_1_percentage .' '. l($node->results[$node->node_ref_1]['#title'], 'node/'. $node->node_ref_1) .' <br/> '.
+                 $ref_2_percentage .' '. l($node->results[$node->node_ref_2]['#title'], 'node/'. $node->node_ref_2);
+    }  
+
+    $output = theme('item_list', $items, 'Smackdown Standings', 'ol');
+  }
+  else {
+    drupal_set_message('There are no results for this type.');
+  }
+  
+  return $output;
+}
+
+function smackdown_taxonomy_filter($node_type) {
+  $node_type_name = node_get_types('name', $node_type);
+
+  if (empty($node_type_name)) {
+    return;
+  }
+
+  $form = array();
+  $form['#node']->type = $node_type;
+  $form['type']['#value'] = $node_type;
+  drupal_prepare_form($node_type .'_node_form', $form);
+
+  // Make some small adjustments to the form, and allow for easy overriding
+  // with a custom theme function.
+  $form['taxonomy']['#type'] = 'markup';
+  $form['taxonomy']['#theme'] = 'smackdown_taxonomy_filter';
+
+  // Add a type value so the theme function has context for the node type.
+  $form['taxonomy']['type'] = array(
+    '#type' => 'value',
+    '#value' => $node_type,
+  );
+
+  return drupal_render($form['taxonomy']);
+}
+
+function theme_smackdown_taxonomy_filter($form) {
+  $node_type_name = node_get_types('name', $form['type']['#value']);
+  $form['#value'] = t('Filter contestants to include @types in only the following categories.', array('@types' => drupal_strtolower($node_type_name) .'s'));
+  return drupal_render($form);
+}
+
+function smackdown_taxonomy_js($node_type) {
+  $output = smackdown_taxonomy_filter($node_type);
+  drupal_set_header('text/javascript');
+  print drupal_to_js($output);
+  exit();
+}
+
+/**
+ * array_intersect_key is not supported < php5
+ */
+if (!function_exists('array_intersect_key')) {
+  function array_intersect_key($isec, $keys) {
+    $argc = func_num_args();
+    if ($argc > 2) {
+      for ($i = 1; !empty($isec) && $i < $argc; $i++) {
+        $arr = func_get_arg($i);
+        foreach (array_keys($isec) as $key) {
+          if (!isset($arr[$key])) {
+            unset($isec[$key]);
+          }
+        }
+      }
+      return $isec;
+    }
+    else {
+      $res = array();
+      foreach (array_keys($isec) as $key) {
+        if (isset($keys[$key])) {
+          $res[$key] = $isec[$key];
+        }
+      }
+      return $res;
+    }
+  }
+}

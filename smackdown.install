@@ -1,0 +1,38 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ * Install file for smackdown module.
+ */
+
+/**
+ * Implementation of hook_install().
+ */
+function smackdown_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      db_query("
+        CREATE TABLE `smackdown` (
+          `vid` int(11) NOT NULL,
+          `nid` int(11) NOT NULL,
+          `node_ref_1` int(11) NOT NULL,
+          `node_ref_2` int(11) NOT NULL,
+          `node_ref_type` varchar(25) NOT NULL default ''
+        ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+      ");
+      break;
+    case 'pgsql':
+      db_query("
+        CREATE TABLE `smackdown` (
+          `vid` int(11) NOT NULL,
+          `nid` int(11) NOT NULL,
+          `node_ref_1` int(11) NOT NULL,
+          `node_ref_2` int(11) NOT NULL,
+          `node_ref_type` varchar(25) NOT NULL default ''
+        ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+      ");
+      break;
+  }
+}
