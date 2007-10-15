@@ -118,6 +118,11 @@ function smackdown_menu($may_cache) {
     }
     
   }
+  else {
+    
+    drupal_add_css(drupal_get_path('module', 'smackdown') .'/smackdown.css');
+    
+  }
 
   return $items;
 }
@@ -715,7 +720,7 @@ function smackdown_next($content_type) {
  * @taxonomy_id
  *   id of the taxonomy to remain within
  */
-function smackdown_standings_page($content_type) {
+function smackdown_standings_page($content_type = NULL) {
   if (!$content_type) {    
     // set to the first tab
     foreach (variable_get('smackdown_enabled_smackdown', array()) as $type) {
@@ -737,24 +742,21 @@ function smackdown_standings_page($content_type) {
 
 function theme_smackdown_standings($nodes) {
   if (!empty($nodes)) {
-    foreach ($nodes as $node) {
-      if ($node->results[$node->node_ref_1]['#value'] != 0) {
-        $votes = $node->results[$node->node_ref_1]['#value'] + $node->results[$node->node_ref_2]['#value'];
-        $ref_1_percentage = round(($node->results[$node->node_ref_1]['#value'] / $votes) * 100) .'%';
-        $ref_2_percentage = round(($node->results[$node->node_ref_2]['#value'] / $votes) * 100) .'%';
-      }
-      else {
-        $ref_1_percentage = '0%';
-        $ref_2_percentage = '0%';
-      }
-      $items[] = $ref_1_percentage .' '. l($node->results[$node->node_ref_1]['#title'], 'node/'. $node->node_ref_1) .' <br/> '.
-                 $ref_2_percentage .' '. l($node->results[$node->node_ref_2]['#title'], 'node/'. $node->node_ref_2);
-    }  
+    foreach ($nodes as $node) {      
+      $votes = $node->results[$node->node_ref_1]['#value'] + $node->results[$node->node_ref_2]['#value'];
+      $ref_1_percentage = ($node->results[$node->node_ref_1]['#value'] != 0) ? round(($node->results[$node->node_ref_1]['#value'] / $votes) * 100) : 0;
+      $ref_2_percentage = ($node->results[$node->node_ref_2]['#value'] != 0) ? round(($node->results[$node->node_ref_2]['#value'] / $votes) * 100) : 0;
+      
+      $item  = '<div class="title">'. l($node->title, 'node/'. $node->nid) .' ('. $votes .' vote/s)</div>';
+      $item .= '<div class="percent">'. $node->node_ref_1_title .' '. $ref_1_percentage .'%</div>';
+      $item .= '<div class="bar"><div style="width: '. $ref_1_percentage .'%;" class="foreground"></div></div>';
+      $item .= '<div class="percent">'. $node->node_ref_2_title .' '. $ref_2_percentage .'%</div>';
+      $item .= '<div class="bar"><div style="width: '. $ref_2_percentage .'%;" class="foreground"></div></div>';
+      
+      $items[] = $item;
+    }
 
-    $output = theme('item_list', $items, 'Smackdown Standings', 'ol');
-  }
-  else {
-    drupal_set_message('There are no results for this type.');
+    $output = '<div id="smackdown_standings">'. theme('item_list', $items, 'Smackdown Standings', 'ol') .'</div>';
   }
   
   return $output;
