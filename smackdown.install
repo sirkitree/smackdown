@@ -14,25 +14,40 @@ function smackdown_install() {
     case 'mysql':
     case 'mysqli':
       db_query("
-        CREATE TABLE `smackdown` (
-          `vid` int(11) NOT NULL,
-          `nid` int(11) NOT NULL,
-          `node_ref_1` int(11) NOT NULL,
-          `node_ref_2` int(11) NOT NULL,
-          `node_ref_type` varchar(25) NOT NULL default ''
+        CREATE TABLE {smackdown} (
+          vid int(11) NOT NULL,
+          nid int(11) NOT NULL,
+          node_ref_1 int(11) NOT NULL,
+          node_ref_2 int(11) NOT NULL,
+          node_ref_type varchar(25) NOT NULL default ''
         ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
       ");
       break;
     case 'pgsql':
       db_query("
-        CREATE TABLE `smackdown` (
-          `vid` int(11) NOT NULL,
-          `nid` int(11) NOT NULL,
-          `node_ref_1` int(11) NOT NULL,
-          `node_ref_2` int(11) NOT NULL,
-          `node_ref_type` varchar(25) NOT NULL default ''
+        CREATE TABLE {smackdown} (
+          vid int(11) NOT NULL,
+          nid int(11) NOT NULL,
+          node_ref_1 int(11) NOT NULL,
+          node_ref_2 int(11) NOT NULL,
+          node_ref_type varchar(25) NOT NULL default ''
         ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
       ");
       break;
   }
+}
+
+function activity_uninstall() {
+  if (db_table_exists('smackdown')) {
+    db_query("DROP TABLE {smackdown}");
+  }
+  // Delete any variables that have been set.
+  // We don't just DELETE FROM {variable}, even though we could.
+  $result = db_query("SELECT name FROM {variable} WHERE name LIKE 'smackdown_%'");
+  // Instead we use the API, because API's can change!
+  while ($row = db_fetch_object($result)) {
+    variable_del($row->name);
+  }
+  // Since smackdown stores it's results in votingapi, we should proly get rid of them too
+  db_query("DELETE FROM {votingapi_vote} WHERE tag = 'smackdown'");  
 }
