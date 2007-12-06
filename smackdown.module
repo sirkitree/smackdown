@@ -13,7 +13,12 @@
 function smackdown_help($section) {
   switch ($section) {
     case 'admin/help#smackdown':
-      return t('ADMIN-HELP-TEXT');
+      return t('<h3>Setup</h3>
+               <ol>
+                 <li>Setup your module permissions in <a href="/admin/user/access">Access control</a>.</li>
+                 <li>Edit the <a href="/admin/content/types/smackdown">smackdown content type</a> and select what content types you would like to use in smackdown creation.</li>
+                 <li>Create your smackdowns!</li>
+              </ol>');
       break;
   }
 }
@@ -38,7 +43,12 @@ function smackdown_node_info() {
  *   create permission for all node types to be referenced as a smackdown
  */
 function smackdown_perm() {
-  return array('create smackdown', 'edit own smackdown');
+  return array(
+    'create smackdown',
+    'edit own smackdown',
+    'view smackdowns',
+    'view standings'
+  );
 }
 
 /**
@@ -75,7 +85,7 @@ function smackdown_menu($may_cache) {
       'type' => MENU_CALLBACK,
       'access' => user_access('create smackdown'),
     );
-  
+    
     $items[] = array(
       'path' => 'smackdown/autocomplete',
       'title' => t('Smackdown autocomplete'),
@@ -106,16 +116,21 @@ function smackdown_menu($may_cache) {
           'path' => 'smackdown/'. $type,
           'title' => t($type .' Smackdowns'),
           'type' => MENU_LOCAL_TASK,
-          'access' => user_access('create smackdown'),
+          'access' => user_access('view smackdowns'),
         );
         $items[] = array(
           'path' => 'smackdown/standings/'. $type,
           'title' => t($type .' Standings'),
           'type' => MENU_LOCAL_TASK,
-          'access' => user_access('create smackdown'),
+          'access' => user_access('view standings'),
         );
       }
     }
+    
+  }
+  else {
+    
+    drupal_add_css(drupal_get_path('module', 'smackdown') .'/smackdown.css');
     
   }
 
@@ -265,11 +280,11 @@ function smackdown_get_smackdowns($content_type) {
     while ($row = db_fetch_object($results)) {
       $nids[] = $row->nid;
     }
+    return $nids;
   }
   else {
     drupal_set_message("no content type given");
   }
-  return $nids;
 }
 
 /**
@@ -443,7 +458,8 @@ function theme_smackdown_results($node, $prev_node) {
   $output .= "<span class='smackdown_results_1'>". l($prev_node->results[$prev_node->node_ref_1]['#title'] .' ', 'node/'. $prev_node->node_ref_1) . $ref_1_percentage ."</span> | ";
   $output .= "<span class='smackdown_results_2'>". l($prev_node->results[$prev_node->node_ref_2]['#title'] .' ', 'node/'. $prev_node->node_ref_2) . $ref_2_percentage ."</span>";
   $output .= "<hr/>";
-  $output .= l("Make a Smackdown", 'node/add/smackdown') .' | '. l('View Standings Chart', 'smackdown/standings');
+  $output .= l("Make a Smackdown", 'node/add/smackdown') . ' | ' .
+    l('View Standings Chart', 'smackdown/standings/' . $node->node_ref_type);
   return $output;
 }
 
@@ -677,10 +693,10 @@ function smackdown_next($content_type) {
   $nids = smackdown_get_smackdowns($content_type);
   
   // user has voted before?
-  if (empty($smackdown_user_log)) {
+  if (empty($smackdown_user_log) && $nids) {
     // show a random smackdown within the same type
     $nid = array_rand($nids);
-    $smackdown_diff = $nid[0];
+    $smackdown_diff = array($nids[$nid]);
   }
   else {
     // compare the list of smackdowns to what the user has already voted upon
@@ -715,7 +731,7 @@ function smackdown_next($content_type) {
  * @taxonomy_id
  *   id of the taxonomy to remain within
  */
-function smackdown_standings_page($content_type) {
+function smackdown_standings_page($content_type = NULL) {
   if (!$content_type) {    
     // set to the first tab
     foreach (variable_get('smackdown_enabled_smackdown', array()) as $type) {
@@ -737,24 +753,21 @@ function smackdown_standings_page($content_type) {
 
 function theme_smackdown_standings($nodes) {
   if (!empty($nodes)) {
-    foreach ($nodes as $node) {
-      if ($node->results[$node->node_ref_1]['#value'] != 0) {
-        $votes = $node->results[$node->node_ref_1]['#value'] + $node->results[$node->node_ref_2]['#value'];
-        $ref_1_percentage = round(($node->results[$node->node_ref_1]['#value'] / $votes) * 100) .'%';
-        $ref_2_percentage = round(($node->results[$node->node_ref_2]['#value'] / $votes) * 100) .'%';
-      }
-      else {
-        $ref_1_percentage = '0%';
-        $ref_2_percentage = '0%';
-      }
-      $items[] = $ref_1_percentage .' '. l($node->results[$node->node_ref_1]['#title'], 'node/'. $node->node_ref_1) .' <br/> '.
-                 $ref_2_percentage .' '. l($node->results[$node->node_ref_2]['#title'], 'node/'. $node->node_ref_2);
-    }  
+    foreach ($nodes as $node) {      
+      $votes = $node->results[$node->node_ref_1]['#value'] + $node->results[$node->node_ref_2]['#value'];
+      $ref_1_percentage = ($node->results[$node->node_ref_1]['#value'] != 0) ? round(($node->results[$node->node_ref_1]['#value'] / $votes) * 100) : 0;
+      $ref_2_percentage = ($node->results[$node->node_ref_2]['#value'] != 0) ? round(($node->results[$node->node_ref_2]['#value'] / $votes) * 100) : 0;
+      
+      $item  = '<div class="title">'. l($node->title, 'node/'. $node->nid) .' ('. $votes .' vote/s)</div>';
+      $item .= '<div class="percent">'. $node->node_ref_1_title .' '. $ref_1_percentage .'%</div>';
+      $item .= '<div class="bar"><div style="width: '. $ref_1_percentage .'%;" class="foreground"></div></div>';
+      $item .= '<div class="percent">'. $node->node_ref_2_title .' '. $ref_2_percentage .'%</div>';
+      $item .= '<div class="bar"><div style="width: '. $ref_2_percentage .'%;" class="foreground"></div></div>';
+      
+      $items[] = $item;
+    }
 
-    $output = theme('item_list', $items, 'Smackdown Standings', 'ol');
-  }
-  else {
-    drupal_set_message('There are no results for this type.');
+    $output = '<div id="smackdown_standings">'. theme('item_list', $items, 'Smackdown Standings', 'ol') .'</div>';
   }
   
   return $output;
