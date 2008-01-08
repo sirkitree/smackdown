@@ -198,7 +198,7 @@ function smackdown_form(&$node) {
     
     foreach ($enabled_types as $key => $type) {
       if ($key != 'smackdown') {
-        $options[$key] = $type->type;
+        $options[$key] = node_get_types('name', $type->type);
       }
     }
     $options[0] = t('<none>');
