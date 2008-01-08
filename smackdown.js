@@ -6,7 +6,7 @@ if (Drupal.jsEnabled) {
     $("#edit-node-ref-type").each(update_taxonomy_autocomplete);
 
     function update_taxonomy_autocomplete() {
-      $.getJSON("/smackdown/taxonomy/js/" + this.value, attach_taxonomy_autocomplete);
+      $.getJSON(Drupal_base_path + "smackdown/taxonomy/js/" + this.value, attach_taxonomy_autocomplete);
     };
 
     function attach_taxonomy_autocomplete(json) {
@@ -16,18 +16,18 @@ if (Drupal.jsEnabled) {
 
       $("#smackdown-taxonomy-filter select").bind('change', function() {
         if ($(this).attr('size') > 1) {
-		  tax_vals.push($(this).val());
-		}
-		else {
-		  tax_vals = new Array($(this).val());
-		}
+        tax_vals.push($(this).val());
+      }
+      else {
+        tax_vals = new Array($(this).val());
+      }
         // http://drupal.org/node/154323
         // calculate_tax_val();
 
         change_auto_val(tax_vals);
       });
       change_auto_val(null);
-	};
+    };
 
     function change_auto_val(tax_vals){
       if (tax_vals == null) {

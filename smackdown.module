@@ -166,6 +166,9 @@ function smackdown_form_alter($form_id, &$form) {
  * This adds two nodereference fields and a node-type selector to our content type submission.
  */
 function smackdown_form(&$node) {
+  // js base_path: http://pingv.com/blog/john-fiala/200710/using-base-path-javascript-jquery
+  $js = "var Drupal_base_path = '". base_path() ."';";
+  drupal_add_js($js, 'inline');
   drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
 
   // Set the expected smackdown type, or take one from the url
@@ -468,11 +471,11 @@ function theme_smackdown_results($node, $prev_node) {
  */
 function smackdown_validate(&$node) {
 
-	$node_ref_1_human = $node->node_ref_1;
-	$node_ref_1_machine = smackdown_cleanse_ref($node->node_ref_1);
+	 $node_ref_1_human = $node->node_ref_1;
+	 $node_ref_1_machine = smackdown_cleanse_ref($node->node_ref_1);
 
-	$node_ref_2_human = $node->node_ref_2;
-	$node_ref_2_machine = smackdown_cleanse_ref($node->node_ref_2);
+	 $node_ref_2_human = $node->node_ref_2;
+	 $node_ref_2_machine = smackdown_cleanse_ref($node->node_ref_2);
 
   if (empty($node->node_ref_1)) {
     form_set_error('node_ref_1', t("You must choose a node."));
