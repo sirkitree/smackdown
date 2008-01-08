@@ -246,7 +246,19 @@ function smackdown_form(&$node) {
     '#description' => t('Type the name of a @type.', array('@type' => $node_ref_type_name ? drupal_strtolower($node_ref_type_name) : t('contestant'))),
     '#default_value' => $node_ref_2_human,
   );
-
+  
+  $type = node_get_types('type', $node);
+  if ($type->body_label) {
+    $form['body_filter']['body'] = array(
+      '#type' => 'textarea',
+      '#title' => check_plain($type->body_label),
+      '#default_value' => $node->body,
+      '#required' => FALSE
+    );
+    
+    $form['body_filter']['filter'] = filter_form($node->format);
+  }
+  
   return $form;
 
 }
