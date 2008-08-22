@@ -2,8 +2,8 @@ if (Drupal.jsEnabled) {
   $(document).ready(function () {
     ref_init_val = $("#edit-smackdown-autocomplete").val();
     tax_vals = new Array();
+    
     $("#edit-node-ref-type").bind('change', update_taxonomy_autocomplete);
-    $("#edit-node-ref-type").each(update_taxonomy_autocomplete);
 
     function update_taxonomy_autocomplete() {
       $.getJSON(Drupal_base_path + "smackdown/taxonomy/js/" + this.value, attach_taxonomy_autocomplete);

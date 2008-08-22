@@ -129,16 +129,14 @@ function smackdown_menu($may_cache) {
     
   }
   else {
-    
-    drupal_add_css(drupal_get_path('module', 'smackdown') .'/smackdown.css');
-    
+    drupal_add_css(drupal_get_path('module', 'smackdown') .'/smackdown.css');    
   }
 
   return $items;
 }
 
 /**
- * Implementation of hook_form_alter
+ * Implementation of hook_form_alter().
  *
  * Adding settings to the smackdown content type. Choose which content type to reference.
  */
@@ -146,9 +144,9 @@ function smackdown_form_alter($form_id, &$form) {
   if ($form_id == 'node_type_form' && isset($form['identity']['type']) && $form['#node_type']->type == 'smackdown') {
     $types = node_get_types('types');
     foreach ($types as $key => $type) {
-     if ($key != 'smackdown') {
-       $options[$key] = $type->type;
-     }
+      if ($key != 'smackdown') {
+        $options[$key] = $type->type;
+      }
     }
 
     $form['workflow']['smackdown_enabled'] = array(
@@ -222,7 +220,9 @@ function smackdown_form(&$node) {
     '#type' => 'hidden',
     '#value' => url('smackdown/autocomplete', NULL, NULL, TRUE),
   );
-
+  
+  // todo: check to see i there is even a taxonomy associated with this content type
+  // otherwise the theme is still rendered, giving an out of context message 
   $form['smackdown_taxonomy_filter'] = array(
     '#prefix' => '<div id="smackdown-taxonomy-filter">',
     '#suffix' => '</div>',
@@ -788,9 +788,15 @@ function theme_smackdown_standings($nodes) {
   return $output;
 }
 
-function smackdown_taxonomy_filter($node_type) {
+function smackdown_taxonomy_filter($node_type) {  
+  // smackdown_taxonomy_filter should only be called if the $node_type has a vocabulary association
+  $query = db_query("SELECT * FROM vocabulary_node_types WHERE type = '%s'", $node_type);
+  $vid = db_result($query);
+  if (empty($vid)) {
+    return;
+  }
+  
   $node_type_name = node_get_types('name', $node_type);
-
   if (empty($node_type_name)) {
     return;
   }
@@ -816,15 +822,27 @@ function smackdown_taxonomy_filter($node_type) {
 
 function theme_smackdown_taxonomy_filter($form) {
   $node_type_name = node_get_types('name', $form['type']['#value']);
+  
+  // @todo: use the pluralize function here instead. otherwize you get 'storys' for example
   $form['#value'] = t('Filter contestants to include @types in only the following categories.', array('@types' => drupal_strtolower($node_type_name) .'s'));
   return drupal_render($form);
 }
 
 function smackdown_taxonomy_js($node_type) {
-  $output = smackdown_taxonomy_filter($node_type);
-  drupal_set_header('text/javascript');
-  print drupal_to_js($output);
-  exit();
+  // before we print out a list to choose from, make sure there are terms in the vocabulary
+  $query = db_query("SELECT * FROM vocabulary_node_types WHERE type = '%s'", $node_type);
+  $vid = db_result($query);
+  if (!empty($vid)) {
+    $query = db_query("SELECT * FROM {term_data} WHERE vid = %d", $vid);
+    $term = db_result($query);
+    if (empty($term)) {
+      exit();
+    }
+    $output = smackdown_taxonomy_filter($node_type);    
+    drupal_set_header('text/javascript');
+    print drupal_to_js($output);
+    exit();
+  }
 }
 
 /**

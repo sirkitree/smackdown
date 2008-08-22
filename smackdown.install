@@ -37,7 +37,7 @@ function smackdown_install() {
   }
 }
 
-function activity_uninstall() {
+function smackdown_uninstall() {
   if (db_table_exists('smackdown')) {
     db_query("DROP TABLE {smackdown}");
   }
