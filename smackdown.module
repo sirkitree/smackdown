@@ -155,13 +155,17 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
 function smackdown_nodeapi(&$node, $op) {
   if ($op == 'view' && $node->type == 'smackdown') {
     // a log of previous votes are stored in $_SESSION
-    $prev_votes = array_reverse($_SESSION['smackdown_user_log']);
+    if (!empty($_SESSION['smackdown_user_log'])) {
+      $prev_votes = array_reverse($_SESSION['smackdown_user_log']);
+    
+      if (!empty($prev_votes)) {
+        // get the results for the last smackdown voted upon
+        $prev_results = smackdown_results(node_load($prev_votes[0]));
 
-    // get the results for the last smackdown voted upon
-    $prev_results = smackdown_results(node_load($prev_votes[0]));
-
-    // append the results of the previous smackdown to $node->content
-    $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
+        // append the results of the previous smackdown to $node->content
+        $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
+      }
+    }
   }
 }
 
