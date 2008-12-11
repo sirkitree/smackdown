@@ -2,7 +2,7 @@
 // $Id$
 
 /**
- * @file
+ * @file smackdown.install
  * Install file for smackdown module.
  */
 
@@ -10,44 +10,19 @@
  * Implementation of hook_install().
  */
 function smackdown_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysql':
-    case 'mysqli':
-      db_query("
-        CREATE TABLE {smackdown} (
-          vid int(11) NOT NULL,
-          nid int(11) NOT NULL,
-          node_ref_1 int(11) NOT NULL,
-          node_ref_2 int(11) NOT NULL,
-          node_ref_type varchar(25) NOT NULL default ''
-        ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-      ");
-      break;
-    case 'pgsql':
-      db_query("
-        CREATE TABLE {smackdown} (
-          vid int(11) NOT NULL,
-          nid int(11) NOT NULL,
-          node_ref_1 int(11) NOT NULL,
-          node_ref_2 int(11) NOT NULL,
-          node_ref_type varchar(25) NOT NULL default ''
-        ) ENGINE=MyISAM DEFAULT CHARSET=latin1;
-      ");
-      break;
-  }
+  // Create our content type through drupal_execute. This includes two
+  // nodereference fields. Content types that are referenced can be edited
+  // by the user through the CCK interface.
+  module_load_include('inc', 'smackdown', 'smackdown.content');
+  $form_state['values']['type_name'] = '<create>';
+  $form_state['values']['macro'] = smackdown_content_export();
+  drupal_execute('content_copy_import_form', $form_state);
 }
 
 function smackdown_uninstall() {
-  if (db_table_exists('smackdown')) {
-    db_query("DROP TABLE {smackdown}");
-  }
-  // Delete any variables that have been set.
-  // We don't just DELETE FROM {variable}, even though we could.
-  $result = db_query("SELECT name FROM {variable} WHERE name LIKE 'smackdown_%'");
-  // Instead we use the API, because API's can change!
-  while ($row = db_fetch_object($result)) {
-    variable_del($row->name);
-  }
+  // Leave it up to the user to remove the content type and CCK fields that we
+  // imported in hook_install().
+
   // Since smackdown stores it's results in votingapi, we should proly get rid of them too
-  db_query("DELETE FROM {votingapi_vote} WHERE tag = 'smackdown'");  
+  db_query("DELETE FROM {votingapi_vote} WHERE tag = 'smackdown'");
 }

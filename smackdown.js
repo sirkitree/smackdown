@@ -1,45 +1,57 @@
-if (Drupal.jsEnabled) {
-  $(document).ready(function () {
-    ref_init_val = $("#edit-smackdown-autocomplete").val();
-    tax_vals = new Array();
-    
-    $("#edit-node-ref-type").bind('change', update_taxonomy_autocomplete);
+// $Id$
 
-    function update_taxonomy_autocomplete() {
-      $.getJSON(Drupal_base_path + "smackdown/taxonomy/js/" + this.value, attach_taxonomy_autocomplete);
-    };
+/**
+ * Smackdown voting through AJAX
+ *
+ * Provide a means to vote on our nodereference fields and redirect to a new
+ * smackdown node. Javascript techniques accredited to starbow's popups.js.
+ */
 
-    function attach_taxonomy_autocomplete(json) {
-      $("#smackdown-taxonomy-filter").html(json);
-      $("#smackdown-taxonomy-filter .form-autocomplete").parent().remove();
-      $("#smackdown-taxonomy-filter .autocomplete").remove();
+/**
+ * Create the smackdown object/namespace.
+ */
+Drupal.smackdown = function() {};
 
-      $("#smackdown-taxonomy-filter select").bind('change', function() {
-        if ($(this).attr('size') > 1) {
-        tax_vals.push($(this).val());
-      }
-      else {
-        tax_vals = new Array($(this).val());
-      }
-        // http://drupal.org/node/154323
-        // calculate_tax_val();
+/**
+ * Attach the smackdown behavior to nodereferences on the page.
+ *
+ * @param context
+ *   The jQuery object to apply the behaviors to.
+ */
+Drupal.behaviors.smackdown = function(context) {
+  Drupal.smackdown.attach(context, '.field-field-ref1 .field-item a');
+  Drupal.smackdown.attach(context, '.field-field-ref2 .field-item a');
+}
 
-        change_auto_val(tax_vals);
-      });
-      change_auto_val(null);
-    };
+/**
+ * Attach the smackdown behavior to a particular link.
+ *
+ * @param selector
+ *   jQuery selector for links to attach behavior to.
+ */
+Drupal.smackdown.attach = function(context, selector) {
+  $(selector, context).each( function() {
+    var $element = $(this);
+    // Mark the element as attached.
+    $element.addClass('smackdown-processed');
 
-    function change_auto_val(tax_vals){
-      if (tax_vals == null) {
-        new_ref_val = ref_init_val + '/' + $("#edit-node-ref-type").val();
-      }
-      else {
-        new_ref_val = ref_init_val + '/' + $("#edit-node-ref-type").val() + '/' + tax_vals;
-      }
-      $("#edit-node-ref-1-autocomplete").val(new_ref_val);
-      $("#edit-node-ref-2-autocomplete").val(new_ref_val);
-      $(".form-autocomplete").unbind("keyup").unbind("keydown").unbind("blur");
-      Drupal.autocompleteAutoAttach();
-    };
+    // Attach the on-click popup behavior to the element.
+    $element.click(function(e){
+      var nid = this.href.split('/').reverse()[0];
+      var sid = context.URL.split('/').reverse()[0];
+      var params = {'cid':nid, 'sid':sid};
+      // post nid and context to smackdown/vote
+      ajaxOptions = {
+        url: '/smackdown/vote',
+        dataType: 'json',
+        data: params,
+        success: function(json) {
+          location.href = '/' + json.url;
+        }
+      };
+      $.ajax(ajaxOptions);
+      return false;
+    });
   });
-};
+
+}
