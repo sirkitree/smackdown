@@ -63,9 +63,9 @@ function smackdown_next() {
   // get a list of all created smackdowns
   $smackdowns = smackdown_get_smackdowns();
 
-  // user has voted before?
+  // user hasn't voted before
   if (empty($smackdown_user_log) && !empty($smackdowns)) {
-    // show a random smackdown within the same type
+    // show a random smackdown
     $keys = array_keys($smackdowns);
     $nid = array_rand($keys);
     $smackdown_diff = array($keys[$nid]);
@@ -79,10 +79,10 @@ function smackdown_next() {
     if (!$smackdowns || !$smackdown_diff) {
       // ask user to create one if allowed
       if (user_access("create smackdown")) {
-        drupal_set_message(t("All out of smackdowns, would you like to create one yourself?"));
+        drupal_set_message(t("All out of smackdowns, would you like to create one yourself?")); // theme this
       }
       else {
-        drupal_set_message(t("Login to create additional smackdowns."));
+        drupal_set_message(t("Login to create additional smackdowns.")); // theme this
       }
     }
   }
@@ -232,4 +232,14 @@ function theme_smackdown_results($node, $results) {
   $output .= "<span class='smackdown_results_1'>". l($results[$node_ref1]['title'] .' ', 'node/'. $node_ref1) . $percentage_ref1 ."</span> | ";
   $output .= "<span class='smackdown_results_2'>". l($results[$node_ref2]['title'] .' ', 'node/'. $node_ref2) . $percentage_ref2 ."</span>";
   return $output;
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function smackdown_views_api() {
+  return array(
+    'api' => 2.0,
+    'path' => drupal_get_path('module', 'smackdown'),
+  );  
 }
