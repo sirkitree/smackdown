@@ -94,15 +94,15 @@ function smackdown_views_default_views() {
   ));
   $handler->override_option('path', 'smackdowns/recent');
   $handler->override_option('menu', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
+    'type' => 'default tab',
+    'title' => 'most recent',
+    'weight' => '0',
     'name' => 'navigation',
   ));
   $handler->override_option('tab_options', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
+    'type' => 'normal',
+    'title' => 'smackdown statistics',
+    'weight' => '0',
   ));
   $handler = $view->new_display('page', 'most votes', 'page_2');
   $handler->override_option('relationships', array(
@@ -137,9 +137,9 @@ function smackdown_views_default_views() {
   ));
   $handler->override_option('path', 'smackdowns/votes');
   $handler->override_option('menu', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
+    'type' => 'tab',
+    'title' => 'most votes',
+    'weight' => '0',
     'name' => 'navigation',
   ));
   $handler->override_option('tab_options', array(
@@ -162,9 +162,9 @@ function smackdown_views_default_views() {
   ));
   $handler->override_option('path', 'smackdowns/comments');
   $handler->override_option('menu', array(
-    'type' => 'none',
-    'title' => '',
-    'weight' => 0,
+    'type' => 'tab',
+    'title' => 'most comments',
+    'weight' => '1',
     'name' => 'navigation',
   ));
   $handler->override_option('tab_options', array(
