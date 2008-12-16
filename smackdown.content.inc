@@ -1,5 +1,5 @@
 <?php
-// $Id$
+// \$Id$
 
 /**
  * @file smackdown.content.inc
@@ -8,250 +8,250 @@
  * we need for the module to operate upon.
  */
 function smackdown_content_export() {
-  $output = '
-    $content[\'type\']  = array (
-    \'name\' => \'Smackdown\',
-    \'type\' => \'smackdown\',
-    \'description\' => \'A smackdown pairs two nodes of your choice and lets users vote on them according to the criteria given.\',
-    \'title_label\' => \'Question\',
-    \'body_label\' => \'\',
-    \'min_word_count\' => \'0\',
-    \'help\' => \'\',
-    \'node_options\' =>
+  $output = "
+    \$content['type']  = array (
+    'name' => 'Smackdown',
+    'type' => 'smackdown',
+    'description' => 'A smackdown pairs two nodes of your choice and lets users vote on them according to the criteria given.',
+    'title_label' => 'Question',
+    'body_label' => '',
+    'min_word_count' => '0',
+    'help' => '',
+    'node_options' =>
     array (
-      \'status\' => true,
-      \'promote\' => false,
-      \'sticky\' => false,
-      \'revision\' => false,
+      'status' => true,
+      'promote' => false,
+      'sticky' => false,
+      'revision' => false,
     ),
-    \'old_type\' => \'smackdown\',
-    \'orig_type\' => \'\',
-    \'module\' => \'node\',
-    \'custom\' => \'1\',
-    \'modified\' => \'1\',
-    \'locked\' => \'0\',
-    \'comment\' => \'0\',
-    \'comment_default_mode\' => \'4\',
-    \'comment_default_order\' => \'1\',
-    \'comment_default_per_page\' => \'50\',
-    \'comment_controls\' => \'3\',
-    \'comment_anonymous\' => 0,
-    \'comment_subject_field\' => \'1\',
-    \'comment_preview\' => \'1\',
-    \'comment_form_location\' => \'0\',
-    \'fivestar\' => 0,
-    \'fivestar_stars\' => 5,
-    \'fivestar_labels_enable\' => 1,
-    \'fivestar_label_0\' => \'Cancel rating\',
-    \'fivestar_label_1\' => \'Poor\',
-    \'fivestar_label_2\' => \'Okay\',
-    \'fivestar_label_3\' => \'Good\',
-    \'fivestar_label_4\' => \'Great\',
-    \'fivestar_label_5\' => \'Awesome\',
-    \'fivestar_label_6\' => \'Give it @star/@count\',
-    \'fivestar_label_7\' => \'Give it @star/@count\',
-    \'fivestar_label_8\' => \'Give it @star/@count\',
-    \'fivestar_label_9\' => \'Give it @star/@count\',
-    \'fivestar_label_10\' => \'Give it @star/@count\',
-    \'fivestar_style\' => \'average\',
-    \'fivestar_text\' => \'dual\',
-    \'fivestar_title\' => 1,
-    \'fivestar_feedback\' => 1,
-    \'fivestar_unvote\' => 0,
-    \'fivestar_position_teaser\' => \'hidden\',
-    \'fivestar_position\' => \'below\',
-    \'fivestar_comment\' => 0,
+    'old_type' => 'smackdown',
+    'orig_type' => '',
+    'module' => 'node',
+    'custom' => '1',
+    'modified' => '1',
+    'locked' => '0',
+    'comment' => '0',
+    'comment_default_mode' => '4',
+    'comment_default_order' => '1',
+    'comment_default_per_page' => '50',
+    'comment_controls' => '3',
+    'comment_anonymous' => 0,
+    'comment_subject_field' => '1',
+    'comment_preview' => '1',
+    'comment_form_location' => '0',
+    'fivestar' => 0,
+    'fivestar_stars' => 5,
+    'fivestar_labels_enable' => 1,
+    'fivestar_label_0' => 'Cancel rating',
+    'fivestar_label_1' => 'Poor',
+    'fivestar_label_2' => 'Okay',
+    'fivestar_label_3' => 'Good',
+    'fivestar_label_4' => 'Great',
+    'fivestar_label_5' => 'Awesome',
+    'fivestar_label_6' => 'Give it @star/@count',
+    'fivestar_label_7' => 'Give it @star/@count',
+    'fivestar_label_8' => 'Give it @star/@count',
+    'fivestar_label_9' => 'Give it @star/@count',
+    'fivestar_label_10' => 'Give it @star/@count',
+    'fivestar_style' => 'average',
+    'fivestar_text' => 'dual',
+    'fivestar_title' => 1,
+    'fivestar_feedback' => 1,
+    'fivestar_unvote' => 0,
+    'fivestar_position_teaser' => 'hidden',
+    'fivestar_position' => 'below',
+    'fivestar_comment' => 0,
   );
-  $content[fields]  = array (
+  \$content[fields]  = array (
     0 =>
     array (
-      \'label\' => \'First Contestant\',
-      \'field_name\' => \'field_ref1\',
-      \'type\' => \'nodereference\',
-      \'widget_type\' => \'nodereference_autocomplete\',
-      \'change\' => \'Change basic information\',
-      \'weight\' => \'-4\',
-      \'autocomplete_match\' => \'contains\',
-      \'description\' => \'\',
-      \'default_value\' =>
+      'label' => 'First Contestant',
+      'field_name' => 'field_ref1',
+      'type' => 'nodereference',
+      'widget_type' => 'nodereference_autocomplete',
+      'change' => 'Change basic information',
+      'weight' => '-4',
+      'autocomplete_match' => 'contains',
+      'description' => '',
+      'default_value' =>
       array (
         0 =>
         array (
-          \'nid\' => NULL,
-          \'_error_element\' => \'default_value_widget][field_ref1][0][nid][nid\',
+          'nid' => NULL,
+          '_error_element' => 'default_value_widget][field_ref1][0][nid][nid',
         ),
       ),
-      \'default_value_php\' => \'\',
-      \'default_value_widget\' => NULL,
-      \'required\' => 1,
-      \'multiple\' => \'0\',
-      \'referenceable_types\' =>
+      'default_value_php' => '',
+      'default_value_widget' => NULL,
+      'required' => 1,
+      'multiple' => '0',
+      'referenceable_types' =>
       array (
-        \'story\' => \'story\',
-        \'blog\' => 0,
-        \'deadwood_category\' => 0,
-        \'deadwood_item\' => 0,
-        \'page\' => 0,
-        \'poll\' => 0,
-        \'smackdown\' => 0,
+        'story' => 'story',
+        'blog' => 0,
+        'deadwood_category' => 0,
+        'deadwood_item' => 0,
+        'page' => 0,
+        'poll' => 0,
+        'smackdown' => 0,
       ),
-      \'advanced_view\' => \'--\',
-      \'advanced_view_args\' => \'\',
-      \'op\' => \'Save field settings\',
-      \'module\' => \'nodereference\',
-      \'widget_module\' => \'nodereference\',
-      \'columns\' =>
+      'advanced_view' => '--',
+      'advanced_view_args' => '',
+      'op' => 'Save field settings',
+      'module' => 'nodereference',
+      'widget_module' => 'nodereference',
+      'columns' =>
       array (
-        \'nid\' =>
+        'nid' =>
         array (
-          \'type\' => \'int\',
-          \'unsigned\' => true,
-          \'not null\' => false,
+          'type' => 'int',
+          'unsigned' => true,
+          'not null' => false,
         ),
       ),
-      \'display_settings\' =>
+      'display_settings' =>
       array (
-        \'label\' =>
+        'label' =>
         array (
-          \'format\' => \'above\',
-          \'exclude\' => 0,
+          'format' => 'above',
+          'exclude' => 0,
         ),
-        \'teaser\' =>
+        'teaser' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
-        \'full\' =>
+        'full' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         4 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         2 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         3 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
-        \'token\' =>
+        'token' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
       ),
     ),
     1 =>
     array (
-      \'label\' => \'Second Contestant\',
-      \'field_name\' => \'field_ref2\',
-      \'type\' => \'nodereference\',
-      \'widget_type\' => \'nodereference_autocomplete\',
-      \'change\' => \'Change basic information\',
-      \'weight\' => \'-3\',
-      \'autocomplete_match\' => \'contains\',
-      \'description\' => \'\',
-      \'default_value\' =>
+      'label' => 'Second Contestant',
+      'field_name' => 'field_ref2',
+      'type' => 'nodereference',
+      'widget_type' => 'nodereference_autocomplete',
+      'change' => 'Change basic information',
+      'weight' => '-3',
+      'autocomplete_match' => 'contains',
+      'description' => '',
+      'default_value' =>
       array (
         0 =>
         array (
-          \'nid\' => NULL,
-          \'_error_element\' => \'default_value_widget][field_ref2][0][nid][nid\',
+          'nid' => NULL,
+          '_error_element' => 'default_value_widget][field_ref2][0][nid][nid',
         ),
       ),
-      \'default_value_php\' => \'\',
-      \'default_value_widget\' =>
+      'default_value_php' => '',
+      'default_value_widget' =>
       array (
-        \'field_ref2\' =>
+        'field_ref2' =>
         array (
           0 =>
           array (
-            \'nid\' =>
+            'nid' =>
             array (
-              \'nid\' => \'\',
-              \'_error_element\' => \'default_value_widget][field_ref2][0][nid][nid\',
+              'nid' => '',
+              '_error_element' => 'default_value_widget][field_ref2][0][nid][nid',
             ),
-            \'_error_element\' => \'default_value_widget][field_ref2][0][nid][nid\',
+            '_error_element' => 'default_value_widget][field_ref2][0][nid][nid',
           ),
         ),
       ),
-      \'required\' => 1,
-      \'multiple\' => \'0\',
-      \'referenceable_types\' =>
+      'required' => 1,
+      'multiple' => '0',
+      'referenceable_types' =>
       array (
-        \'story\' => \'story\',
-        \'blog\' => 0,
-        \'deadwood_category\' => 0,
-        \'deadwood_item\' => 0,
-        \'page\' => 0,
-        \'poll\' => 0,
-        \'smackdown\' => 0,
+        'story' => 'story',
+        'blog' => 0,
+        'deadwood_category' => 0,
+        'deadwood_item' => 0,
+        'page' => 0,
+        'poll' => 0,
+        'smackdown' => 0,
       ),
-      \'advanced_view\' => \'--\',
-      \'advanced_view_args\' => \'\',
-      \'op\' => \'Save field settings\',
-      \'module\' => \'nodereference\',
-      \'widget_module\' => \'nodereference\',
-      \'columns\' =>
+      'advanced_view' => '--',
+      'advanced_view_args' => '',
+      'op' => 'Save field settings',
+      'module' => 'nodereference',
+      'widget_module' => 'nodereference',
+      'columns' =>
       array (
-        \'nid\' =>
+        'nid' =>
         array (
-          \'type\' => \'int\',
-          \'unsigned\' => true,
-          \'not null\' => false,
+          'type' => 'int',
+          'unsigned' => true,
+          'not null' => false,
         ),
       ),
-      \'display_settings\' =>
+      'display_settings' =>
       array (
-        \'label\' =>
+        'label' =>
         array (
-          \'format\' => \'above\',
-          \'exclude\' => 0,
+          'format' => 'above',
+          'exclude' => 0,
         ),
-        \'teaser\' =>
+        'teaser' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
-        \'full\' =>
+        'full' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         4 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         2 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
         3 =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
-        \'token\' =>
+        'token' =>
         array (
-          \'format\' => \'default\',
-          \'exclude\' => 0,
+          'format' => 'default',
+          'exclude' => 0,
         ),
       ),
     ),
   );
-  $content[extra]  = array (
-    \'title\' => \'-5\',
-    \'menu\' => \'-2\',
+  \$content[extra]  = array (
+    'title' => '-5',
+    'menu' => '-2',
   );
-  ';
+  ";
   return $output;
 }
