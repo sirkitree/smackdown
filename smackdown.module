@@ -21,6 +21,7 @@ function smackdown_perm() {
  */
 function smackdown_init() {
   drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
+  
 }
 
 /**
@@ -37,7 +38,27 @@ function smackdown_menu() {
     'access arguments'  => array('vote on smackdowns'),
     'type'              => MENU_CALLBACK,
   );
+  $items['node/%node/voting-results'] = array(
+    'title'             => 'Results',
+    'page callback'     => 'smackdown_results',
+    'page arguments'    => array(1),
+    'access callback'   => 'smackdown_results_access',
+    'access arguments'  => array(1),
+    'type'              => MENU_LOCAL_TASK,
+  );
   return $items;
+}
+
+/**
+ * Access callback to make sure the node type is correct.
+ * This could also be done with a _load for a %node-smackdown arg
+ */
+function smackdown_results_access($node) {
+  global $user;
+  if ($node->type == 'smackdown' && user_access('view smackdowns', $user)) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
@@ -61,7 +82,8 @@ function smackdown_next() {
   $smackdown_user_log = isset($_SESSION['smackdown_user_log']) ? $_SESSION['smackdown_user_log'] : array();
 
   // get a list of all created smackdowns
-  $smackdowns = smackdown_get_smackdowns();
+  $previous = is_numeric(arg(1)) ? array(arg(1)) : array_reverse($smackdown_user_log);
+  $smackdowns = smackdown_get_smackdowns($previous[0]);
 
   // user hasn't voted before
   if (empty($smackdown_user_log) && !empty($smackdowns)) {
@@ -100,12 +122,16 @@ function smackdown_next() {
 /**
  * Get a list of all created smackdowns.
  *
+ * db_rewrite_sql is implemented here so that other module have a chance to
+ * modify the sql string before the database is queried.
+ *
  * @return
  *   An array of smackdown node objects.
  */
-function smackdown_get_smackdowns() {
+function smackdown_get_smackdowns($previous = NULL) {
   // find all smackdowns
-  $results = db_query("SELECT * FROM {node} WHERE type = 'smackdown' AND status = 1");
+  $sql = db_rewrite_sql("SELECT * FROM {node} AS node_smackdown WHERE node_smackdown.type = 'smackdown' AND node_smackdown.status = 1 AND node_smackdown.nid <> %d", 'node_smackdown', 'nid', $previous);
+  $results = db_query($sql, $previous);
   while ($row = db_fetch_object($results)) {
     $smackdowns[$row->nid] = $row;
   }
@@ -154,6 +180,10 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
  */
 function smackdown_nodeapi(&$node, $op) {
   if ($op == 'view' && $node->type == 'smackdown') {
+    // set a var for js
+    drupal_add_js("var sid = $node->nid;", 'inline');
+    
+    /* add a setting for this
     // a log of previous votes are stored in $_SESSION
     if (!empty($_SESSION['smackdown_user_log'])) {
       $prev_votes = array_reverse($_SESSION['smackdown_user_log']);
@@ -166,6 +196,7 @@ function smackdown_nodeapi(&$node, $op) {
         $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
       }
     }
+    */
   }
 }
 
@@ -187,7 +218,7 @@ function smackdown_results($node) {
     $results[$ref[0]['nid']] = votingapi_select_results($criteria);
     $results[$ref[0]['nid']]['title'] = node_load($ref[0]['nid'])->title;
   }
-  // append the results to our smackdown node
+  
   return theme('smackdown_results', $node, $results);
 }
 
@@ -201,7 +232,7 @@ function smackdown_link($type, $node, $teaser = FALSE) {
   if ($node->type == 'smackdown') {
     $links['smackdown_next'] = array(
       'title' => t('Next Smackdown »'),
-      'href' => 'smackdown',
+      'href' => 'smackdown/'. arg(1),
     );
   }
   return $links;
@@ -224,14 +255,28 @@ function theme_smackdown_results($node, $results) {
 
 	// turn the results into a percentage
 	$votes = $results[$node_ref1][0]['value'] + $results[$node_ref2][0]['value'];
-	$percentage_ref1 = round(($results[$node_ref1][0]['value'] / $votes) * 100) .'%';
-	$percentage_ref2 = round(($results[$node_ref2][0]['value'] / $votes) * 100) .'%';
-
-	// output
-	$output = "<span class='smackdown_results_title'>Previous Smackdown: </span>";
-  $output .= "<span class='smackdown_results_1'>". l($results[$node_ref1]['title'] .' ', 'node/'. $node_ref1) . $percentage_ref1 ."</span> | ";
-  $output .= "<span class='smackdown_results_2'>". l($results[$node_ref2]['title'] .' ', 'node/'. $node_ref2) . $percentage_ref2 ."</span>";
-  return $output;
+	if ($votes) {
+    $output = '<div class="poll">';
+    foreach ($results as $nid => $node) {
+      $percentage = $node[0]['value'] ? round(($votes / $node[0]['value']) * 100) : 0;
+      $output .= '
+      <div class="text">'. l($node['title'], 'node/'. $nid) .'</div>
+      <div class="bar">
+        <div style="width: '. $percentage .'%;" class="foreground"></div>
+      </div>
+      <div class="percent">
+        '. $percentage .'% ('. format_plural($votes, '1 vote', '@count votes') .')
+      </div>';
+    }
+    $output .= '</div>';
+    
+  	/*
+  	$output = "<span class='smackdown_results_title'>". $node->title ." </span>";
+    $output .= "<span class='smackdown_results_1'>". l($results[$node_ref1]['title'] .' ', 'node/'. $node_ref1) . $percentage_ref1 ."</span> | ";
+    $output .= "<span class='smackdown_results_2'>". l($results[$node_ref2]['title'] .' ', 'node/'. $node_ref2) . $percentage_ref2 ."</span>";
+    */
+    return $output;
+  }
 }
 
 /**

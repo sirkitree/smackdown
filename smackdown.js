@@ -38,15 +38,16 @@ Drupal.smackdown.attach = function(context, selector) {
     // Attach the on-click popup behavior to the element.
     $element.click(function(e){
       var nid = this.href.split('/').reverse()[0];
-      var sid = context.URL.split('/').reverse()[0];
+      // sid is now set within the module
+      //var sid = context.URL.split('/').reverse()[0];
       var params = {'cid':nid, 'sid':sid};
       // post nid and context to smackdown/vote
       ajaxOptions = {
-        url: '/smackdown/vote',
+        url: Drupal.settings.basePath + 'smackdown/vote',
         dataType: 'json',
         data: params,
         success: function(json) {
-          location.href = '/' + json.url;
+          location.href = Drupal.settings.basePath + json.url;
         }
       };
       $.ajax(ajaxOptions);
