@@ -44,14 +44,15 @@ function smackdown_requirements($phase) {
   $requirements = array();
   $t = get_t();
   if ($phase == 'install') {
-    if (!defined('MAINTENANCE_MODE') && !_smackdown_nodereference_installed()) {
+    if (!defined('MAINTENANCE_MODE') && !_smackdown_nodereference_installed() && !_smackdown_content_copy_installed()) {
       $requirements['flag_content_clash']['title'] = $t('Smackdown');
       $requirements['flag_content_clash']['severity'] = REQUIREMENT_ERROR;
       $requirements['flag_content_clash']['description'] = $t('You are trying 
-      to install the <em>Smackdown</em> module. However we require that you 
-      first have the <em>Node Reference</em> module installed in order to 
-      import the default content type. Please enable <em>Node Reference</em>
-      and then enable <em>Smackdown</em>.');
+      to install the <em>Smackdown</em> module. However, we require that you 
+      first have the <em>Node Reference</em> module as well as the <em>Content 
+      Copy</a> module installed in order to install the default content type. 
+      Please enable these module and <strong>then</strong> enable the 
+      <em>Smackdown</em> module <strong>seperately</strong>.');
     }
   }
   return $requirements;
@@ -62,5 +63,13 @@ function smackdown_requirements($phase) {
  */
 function _smackdown_nodereference_installed() {
   $version = @drupal_get_installed_schema_version('nodereference', TRUE);
+  return (isset($version) && $version != SCHEMA_UNINSTALLED);
+}
+
+/**
+ *  Returns TRUE if the "Content Copy" module, which we need, is installed.
+ */
+function _smackdown_content_copy_installed() {
+  $version = @drupal_get_installed_schema_version('content_copy', TRUE);
   return (isset($version) && $version != SCHEMA_UNINSTALLED);
 }
