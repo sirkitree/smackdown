@@ -6,9 +6,10 @@
         \/      \/     \/     \/     \/    \/                 \/
 
 Installation Instructions
-  - Enable the Node Reference module _before_ you enable Smackdown module. Do
-    _not_ enable them at the same time or you will get an error when Smackdown
-    tries to import the default content type.
+  - The Content Copy and Nodereference modules are REQUIRED. You mst enable 
+    these BEFORE you enable Smackdown. Do NOT enable them at the same time or
+    you will get an error when Smackdown tries to import the default content 
+    type.
   - When you enable Smackdown, it'll automatically create the smackdown
     content type which contains a title and two nodereference CCK fields.
   - goto: admin/content/node-type/smackdown/fields
@@ -30,7 +31,7 @@ Credits
   
   Content module - for the import of content types and providing nodereferences
   http://drupal.org/project/cck
-  - dww, yched, karens (taken from nodereference CVS $Id$s)
+  - dww, yched, karens (taken from nodereference CVS Id)
   
   Views2 module - for easy display integration
   http://drupal.org/project/views
