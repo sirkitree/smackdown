@@ -21,7 +21,7 @@ Drupal.smackdown = function() {};
 Drupal.behaviors.smackdown = function(context) {
   Drupal.smackdown.attach(context, '.field-field-ref1 .field-item a');
   Drupal.smackdown.attach(context, '.field-field-ref2 .field-item a');
-}
+};
 
 /**
  * Attach the smackdown behavior to a particular link.
@@ -34,12 +34,10 @@ Drupal.smackdown.attach = function(context, selector) {
     var $element = $(this);
     // Mark the element as attached.
     $element.addClass('smackdown-processed');
-
     // Attach the on-click popup behavior to the element.
     $element.click(function(e){
+      Drupal.theme.prototype.voting($element);
       var nid = this.href.split('/').reverse()[0];
-      // sid is now set within the module
-      //var sid = context.URL.split('/').reverse()[0];
       var params = {'cid':nid, 'sid':sid};
       // post nid and context to smackdown/vote
       ajaxOptions = {
@@ -47,12 +45,17 @@ Drupal.smackdown.attach = function(context, selector) {
         dataType: 'json',
         data: params,
         success: function(json) {
-          location.href = Drupal.settings.basePath + json.url;
+          location.href = Drupal.settings.basePath + 'smackdown';
         }
       };
       $.ajax(ajaxOptions);
       return false;
     });
   });
+};
 
-}
+Drupal.theme.prototype.voting = function(element) {
+  var output = "<div id='voting-indicator'>Voting...</div>";
+  element.parent().css({'background-color':'#ffc'})
+  return element.parent().append(output);
+};
