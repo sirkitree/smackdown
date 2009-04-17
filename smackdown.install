@@ -45,10 +45,10 @@ function smackdown_requirements($phase) {
   $t = get_t();
   if ($phase == 'install') {
     // check for content copy module
-    if (!defined('MAINTENANCE_MODE') && !_smackdown_content_copy_installed()) {
-      $requirements['flag_content_clash']['title'] = $t('Smackdown');
-      $requirements['flag_content_clash']['severity'] = REQUIREMENT_ERROR;
-      $requirements['flag_content_clash']['description'] = $t('You are trying 
+    if (!defined('MAINTENANCE_MODE') && !module_exists('content_copy')) {
+      $requirements['content_copy']['title'] = $t('Smackdown');
+      $requirements['content_copy']['severity'] = REQUIREMENT_ERROR;
+      $requirements['content_copy']['description'] = $t('You are trying
       to install the <em>Smackdown</em> module. However we require that you 
       first have the <em>Content Copy</em> module installed in order to 
       import the default content type. Please enable <em>Content Copy</em>
@@ -57,9 +57,9 @@ function smackdown_requirements($phase) {
     
     // check for nodereference module
     if (!defined('MAINTENANCE_MODE') && !_smackdown_nodereference_installed()) {
-      $requirements['flag_content_clash']['title'] = $t('Smackdown');
-      $requirements['flag_content_clash']['severity'] = REQUIREMENT_ERROR;
-      $requirements['flag_content_clash']['description'] = $t('You are trying 
+      $requirements['nodereference']['title'] = $t('Smackdown');
+      $requirements['nodereference']['severity'] = REQUIREMENT_ERROR;
+      $requirements['nodereference']['description'] = $t('You are trying
       to install the <em>Smackdown</em> module. However we require that you 
       first have the <em>Node Reference</em> module installed in order to 
       import the default content type. Please enable <em>Node Reference</em>
@@ -67,14 +67,6 @@ function smackdown_requirements($phase) {
     }
   }
   return $requirements;
-}
-
-/**
- * Returns TRUE if the "Content Copy" module is installed.
- */
-function _smackdown_content_copy_installed() {
-  $version = @drupal_get_installed_schema_version('content_copy', TRUE);
-  return (isset($version) && $version != SCHEMA_UNINSTALLED);
 }
 
 /**

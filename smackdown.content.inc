@@ -8,8 +8,7 @@
  * we need for the module to operate upon.
  */
 function smackdown_content_export() {
-  $output = "
-    \$content['type']  = array (
+  $output = "\$content['type']  = array (
     'name' => 'Smackdown',
     'type' => 'smackdown',
     'description' => 'A smackdown pairs two nodes of your choice and lets users vote on them according to the criteria given.',
@@ -60,9 +59,8 @@ function smackdown_content_export() {
     'fivestar_unvote' => 0,
     'fivestar_position_teaser' => 'hidden',
     'fivestar_position' => 'below',
-    'fivestar_comment' => 0,
   );
-  \$content[fields]  = array (
+  \$content['fields']  = array (
     0 =>
     array (
       'label' => 'First Contestant',
@@ -94,9 +92,17 @@ function smackdown_content_export() {
         'page' => 0,
         'poll' => 0,
         'smackdown' => 0,
+        'classified' => false,
+        'discussion' => false,
+        'event' => false,
+        'file' => false,
+        'list' => false,
+        'photo' => false,
+        'question' => false,
+        'recipe' => false,
+        'review' => false,
       ),
-      'advanced_view' => '--',
-      'advanced_view_args' => '',
+      'show_add_link' => true,
       'op' => 'Save field settings',
       'module' => 'nodereference',
       'widget_module' => 'nodereference',
@@ -150,12 +156,87 @@ function smackdown_content_export() {
     ),
     1 =>
     array (
+      'label' => 'First Contestant Caption',
+      'field_name' => 'field_ref1_caption',
+      'type' => 'text',
+      'widget_type' => 'text_textfield',
+      'change' => 'Change basic information',
+      'weight' => '-3',
+      'rows' => 5,
+      'size' => '60',
+      'description' => '',
+      'default_value' =>
+      array (
+        0 =>
+        array (
+          'value' => '',
+          '_error_element' => 'default_value_widget][field_ref1_caption][0][value',
+        ),
+      ),
+      'default_value_php' => '',
+      'default_value_widget' =>
+      array (
+        'field_ref1_caption' =>
+        array (
+          0 =>
+          array (
+            'value' => '',
+            '_error_element' => 'default_value_widget][field_ref1_caption][0][value',
+          ),
+        ),
+      ),
+      'required' => 0,
+      'multiple' => '0',
+      'text_processing' => '0',
+      'max_length' => '',
+      'allowed_values' => '',
+      'allowed_values_php' => '',
+      'op' => 'Save field settings',
+      'module' => 'text',
+      'widget_module' => 'text',
+      'columns' =>
+      array (
+        'value' =>
+        array (
+          'type' => 'text',
+          'size' => 'big',
+          'not null' => false,
+          'sortable' => true,
+          'views' => true,
+        ),
+      ),
+      'display_settings' =>
+      array (
+        'label' =>
+        array (
+          'format' => 'above',
+          'exclude' => 0,
+        ),
+        'teaser' =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+        'full' =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+        4 =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+      ),
+    ),
+    2 =>
+    array (
       'label' => 'Second Contestant',
       'field_name' => 'field_ref2',
       'type' => 'nodereference',
       'widget_type' => 'nodereference_autocomplete',
       'change' => 'Change basic information',
-      'weight' => '-3',
+      'weight' => '-2',
       'autocomplete_match' => 'contains',
       'description' => '',
       'default_value' =>
@@ -193,9 +274,17 @@ function smackdown_content_export() {
         'page' => 0,
         'poll' => 0,
         'smackdown' => 0,
+        'classified' => false,
+        'discussion' => false,
+        'event' => false,
+        'file' => false,
+        'list' => false,
+        'photo' => false,
+        'question' => false,
+        'recipe' => false,
+        'review' => false,
       ),
-      'advanced_view' => '--',
-      'advanced_view_args' => '',
+      'show_add_link' => true,
       'op' => 'Save field settings',
       'module' => 'nodereference',
       'widget_module' => 'nodereference',
@@ -247,11 +336,85 @@ function smackdown_content_export() {
         ),
       ),
     ),
+    3 =>
+    array (
+      'label' => 'Second Contestant Caption',
+      'field_name' => 'field_ref2_caption',
+      'type' => 'text',
+      'widget_type' => 'text_textfield',
+      'change' => 'Change basic information',
+      'weight' => '-1',
+      'rows' => 5,
+      'size' => '60',
+      'description' => '',
+      'default_value' =>
+      array (
+        0 =>
+        array (
+          'value' => '',
+          '_error_element' => 'default_value_widget][field_ref2_caption][0][value',
+        ),
+      ),
+      'default_value_php' => '',
+      'default_value_widget' =>
+      array (
+        'field_ref2_caption' =>
+        array (
+          0 =>
+          array (
+            'value' => '',
+            '_error_element' => 'default_value_widget][field_ref2_caption][0][value',
+          ),
+        ),
+      ),
+      'required' => 0,
+      'multiple' => '0',
+      'text_processing' => '0',
+      'max_length' => '',
+      'allowed_values' => '',
+      'allowed_values_php' => '',
+      'op' => 'Save field settings',
+      'module' => 'text',
+      'widget_module' => 'text',
+      'columns' =>
+      array (
+        'value' =>
+        array (
+          'type' => 'text',
+          'size' => 'big',
+          'not null' => false,
+          'sortable' => true,
+          'views' => true,
+        ),
+      ),
+      'display_settings' =>
+      array (
+        'label' =>
+        array (
+          'format' => 'above',
+          'exclude' => 0,
+        ),
+        'teaser' =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+        'full' =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+        4 =>
+        array (
+          'format' => 'default',
+          'exclude' => 0,
+        ),
+      ),
+    ),
   );
-  \$content[extra]  = array (
+  \$content['extra']  = array (
     'title' => '-5',
-    'menu' => '-2',
-  );
-  ";
+    'menu' => '0',
+  );";
   return $output;
 }
