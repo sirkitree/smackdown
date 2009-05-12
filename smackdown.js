@@ -19,8 +19,14 @@ Drupal.smackdown = function() {};
  *   The jQuery object to apply the behaviors to.
  */
 Drupal.behaviors.smackdown = function(context) {
-  Drupal.smackdown.attach(context, '.field-field-ref1 .field-item a');
-  Drupal.smackdown.attach(context, '.field-field-ref2 .field-item a');
+  if (Drupal.settings.smackdownPerm == 1) {
+    Drupal.smackdown.attachVote(context, '.field-field-ref1 .field-item a');
+    Drupal.smackdown.attachVote(context, '.field-field-ref2 .field-item a');
+  }
+  else {
+    Drupal.smackdown.attachNotice(context, '.field-field-ref1 .field-item a');
+    Drupal.smackdown.attachNotice(context, '.field-field-ref2 .field-item a');
+  }
 };
 
 /**
@@ -29,8 +35,8 @@ Drupal.behaviors.smackdown = function(context) {
  * @param selector
  *   jQuery selector for links to attach behavior to.
  */
-Drupal.smackdown.attach = function(context, selector) {
-  $(selector, context).each( function() {
+Drupal.smackdown.attachVote = function(context, selector) {
+  $(selector, context).each(function() {
     var $element = $(this);
     // Mark the element as attached.
     $element.addClass('smackdown-processed');
@@ -45,7 +51,7 @@ Drupal.smackdown.attach = function(context, selector) {
         dataType: 'json',
         data: params,
         success: function(json) {
-          location.href = Drupal.settings.basePath + 'smackdown';
+          location.href = Drupal.settings.basePath + 'node/' + sid + '/voting-results';
         }
       };
       $.ajax(ajaxOptions);
@@ -56,6 +62,22 @@ Drupal.smackdown.attach = function(context, selector) {
 
 Drupal.theme.prototype.voting = function(element) {
   var output = "<div id='voting-indicator'>Voting...</div>";
-  element.parent().css({'background-color':'#ffc'})
+  element.parent().css({'background-color':'#ffc'});
   return element.parent().append(output);
 };
+
+Drupal.smackdown.attachNotice = function(context, selector) {
+  $(selector, context).each(function() {
+    var $element = $(this);
+    $element.click(function(e) {
+      Drupal.theme.prototype.notice($element);
+      return false;
+    });
+  });
+}
+
+Drupal.theme.prototype.notice = function(element) {
+  var output = "<div id='voting-indicator'>You do not have sufficient rights to vote.</div>";
+  element.parent().css({'background-color':'#ffc'});
+  return element.parent().append(output);
+}

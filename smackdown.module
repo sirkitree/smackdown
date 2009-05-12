@@ -20,6 +20,9 @@ function smackdown_perm() {
  * Implementation of hook_init().
  */
 function smackdown_init() {
+  if (user_access('vote on smackdowns')) {
+    drupal_add_js(array('smackdownPerm' => 1), 'setting');
+  }
   $path = drupal_get_path('module', 'smackdown');
   drupal_add_js($path .'/smackdown.js');
 }
@@ -133,22 +136,6 @@ function smackdown_results($view, $node) {
   else {
     return theme('smackdown_results', $node, $results);
   }
-}
-
-/**
- * Implementation of hook_link().
- *
- * Provide a link to skip to the next smackdown.
- */
-function smackdown_link($type, $node, $teaser = FALSE) {
-  $links = array();
-  if ($node->type == 'smackdown') {
-    $links['smackdown_next'] = array(
-      'title' => t('Next Smackdown »'),
-      'href' => 'smackdown/'. arg(1),
-    );
-  }
-  return $links;
 }
 
 function smackdown_theme() {
