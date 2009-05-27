@@ -130,7 +130,7 @@ function smackdown_form_node_type_form_alter(&$form, &$form_state) {
   $form['smackdown_type_'. $form['#node_type']->type] = array(
     '#type' => 'checkbox',
     '#title' => t('Smackdown node'),
-    '#description' => t('Use this node as a smackdown node. Please see requirements.'),
+    '#description' => t('Use this node as a smackdown node. Please see <a href="!requirements_url">requirements</a>.', array('!requirements_url' => url(drupal_get_path('module', 'smackdown') .'/INSTALL.txt'))),
     '#default_value' => in_array($form['#node_type']->type, variable_get('smackdown_types', array())),
     '#weight' => 10,
   );
@@ -144,14 +144,13 @@ function smackdown_form_node_type_form_submit($form, $form_state) {
   $current_types = variable_get('smackdown_types', array());
   if (!empty($current_types) && in_array($form['#node_type']->type, $current_types)) {
     if ($form_state['values']['smackdown_type_'. $form['#node_type']->type] === 0) {
-      $types = array_flip($current_types);
-      unset($types[$form['#node_type']->type]);
-      $new_types = array_flip($types);
-      variable_set('smackdown_types', $new_types);
+      unset($current_types[$form['#node_type']->type]);
+      variable_set('smackdown_types', $current_types);
     }
   }
   else {
-    $new_types = array_merge($current_types, array($form['#node_type']->type));
+    // format: type => type
+    $new_types = array_merge($current_types, array($form['#node_type']->type => $form['#node_type']->type));
     variable_set('smackdown_types', $new_types);
   }
 }
