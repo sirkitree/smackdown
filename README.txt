@@ -6,15 +6,7 @@
         \/      \/     \/     \/     \/    \/                 \/
 
 Installation Instructions
-  - The Content Copy and Nodereference modules are REQUIRED. You must enable 
-    these BEFORE you enable Smackdown. Do NOT enable them at the same time or
-    you will get an error when Smackdown tries to import the default content 
-    type.
-  - When you enable Smackdown, it'll automatically create the smackdown
-    content type which contains a title and two nodereference CCK fields.
-  - goto: admin/content/node-type/smackdown/fields
-  - configure each nodereference field to reference the content type of your
-    choice.
+  Please read INSTALL.txt
 
 Credits
   "CCK Export for Node Modules"

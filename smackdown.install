@@ -9,70 +9,12 @@
 /**
  * Implementation of hook_install().
  */
-function smackdown_install() {  
-  // Create our content type through drupal_execute. This includes two
-  // nodereference fields. Content types that are referenced can be edited
-  // by the user through the CCK interface.
-  module_load_include('inc', 'smackdown', 'smackdown.content');
-  $form_state['values']['type_name'] = '<create>';
-  $form_state['values']['macro'] = smackdown_content_export();
-  drupal_execute('content_copy_import_form', $form_state);
-  
+function smackdown_install() {
   $t = get_t();
-  drupal_set_message($t('Please configure your Node Reference fields !here, 
-  chosing which content types they should reference.', array(
-    '!here' => l('here', 'admin/content/node-type/smackdown/fields')
-  )));
+  drupal_set_message($t('Module install. Please read the INSTALL.txt for instructions on how to setup an appropriate content type.'));
 }
 
 function smackdown_uninstall() {
-  // Leave it up to the user to remove the content type and CCK fields that we
-  // imported in hook_install().
-
-  // Since smackdown stores it's results in votingapi, we should proly get rid 
-  // of them too.
+  // Since smackdown stores it's results in votingapi, we should remove of anay reference to them.
   db_query("DELETE FROM {votingapi_vote} WHERE tag = 'smackdown'");
-}
-
-/**
- * Implementation of hook_requirements().
- *
- * We require that nodereference is installed before we can import our content
- * type.
- */
-function smackdown_requirements($phase) {
-  $requirements = array();
-  $t = get_t();
-  if ($phase == 'install') {
-    // check for content copy module
-    if (!defined('MAINTENANCE_MODE') && !module_exists('content_copy')) {
-      $requirements['content_copy']['title'] = $t('Smackdown');
-      $requirements['content_copy']['severity'] = REQUIREMENT_ERROR;
-      $requirements['content_copy']['description'] = $t('You are trying
-      to install the <em>Smackdown</em> module. However we require that you 
-      first have the <em>Content Copy</em> module installed in order to 
-      import the default content type. Please enable <em>Content Copy</em>
-      and then enable <em>Smackdown</em>.');
-    }
-    
-    // check for nodereference module
-    if (!defined('MAINTENANCE_MODE') && !_smackdown_nodereference_installed()) {
-      $requirements['nodereference']['title'] = $t('Smackdown');
-      $requirements['nodereference']['severity'] = REQUIREMENT_ERROR;
-      $requirements['nodereference']['description'] = $t('You are trying
-      to install the <em>Smackdown</em> module. However we require that you 
-      first have the <em>Node Reference</em> module installed in order to 
-      import the default content type. Please enable <em>Node Reference</em>
-      and then enable <em>Smackdown</em>.');
-    }
-  }
-  return $requirements;
-}
-
-/**
- *  Returns TRUE if the "Node Reference" module, which we need, is installed.
- */
-function _smackdown_nodereference_installed() {
-  $version = @drupal_get_installed_schema_version('nodereference', TRUE);
-  return (isset($version) && $version != SCHEMA_UNINSTALLED);
 }

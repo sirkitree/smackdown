@@ -19,32 +19,37 @@ Drupal.smackdown = function() {};
  *   The jQuery object to apply the behaviors to.
  */
 Drupal.behaviors.smackdown = function(context) {
+  var field_1 = '.field-' + Drupal.settings.smackdown.field1.name.replace('_', '-');
+  var field_2 = '.field-' + Drupal.settings.smackdown.field2.name.replace('_', '-');
   if (Drupal.settings.smackdownPerm == 1) {
-    Drupal.smackdown.attachVote(context, '.field-field-ref1 .field-item a');
-    Drupal.smackdown.attachVote(context, '.field-field-ref2 .field-item a');
+    Drupal.smackdown.attachVote(context, '.' + field_1 + ' .field-item a');
+    $(field_1 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field1.nid).addClass('smackdown-processed');
+    Drupal.smackdown.attachVote(context, '.' + field_2 + ' .field-item a');
+    $(field_2 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field2.nid).addClass('smackdown-processed');
   }
   else {
-    Drupal.smackdown.attachNotice(context, '.field-field-ref1 .field-item a');
-    Drupal.smackdown.attachNotice(context, '.field-field-ref2 .field-item a');
+    Drupal.smackdown.attachNotice(context, '.' + field_1 + ' .field-item a');
+    Drupal.smackdown.attachNotice(context, '.' + field_2 + ' .field-item a');
   }
 };
 
 /**
  * Attach the smackdown behavior to a particular link.
  *
+ * @param context
  * @param selector
  *   jQuery selector for links to attach behavior to.
  */
 Drupal.smackdown.attachVote = function(context, selector) {
   $(selector, context).each(function() {
     var $element = $(this);
-    // Mark the element as attached.
-    $element.addClass('smackdown-processed');
     // Attach the on-click popup behavior to the element.
     $element.click(function(e){
       Drupal.theme.prototype.voting($element);
-      var nid = this.href.split('/').reverse()[0];
+      var nid = $element.attr('rel'); // not compatible with clean urls
+      var sid = Drupal.settings.smackdown.sid;
       var params = {'cid':nid, 'sid':sid};
+      console.log(params);
       // post nid and context to smackdown/vote
       ajaxOptions = {
         url: Drupal.settings.basePath + 'smackdown/vote',
