@@ -15,6 +15,15 @@ function smackdown_install() {
 }
 
 function smackdown_uninstall() {
-  // Since smackdown stores it's results in votingapi, we should remove of anay reference to them.
+  // Since smackdown stores it's results in votingapi, we should remove of any
+  // reference to them.
   db_query("DELETE FROM {votingapi_vote} WHERE tag = 'smackdown'");
+}
+
+function smackdown_update_6000() {
+  // We changed from only supporting one content type to support unlimited so
+  // let's make sure that the old type 'smackdown' is in the new list of types.
+  if (db_table_exists('content_type_smackdown')) {
+    variable_set('smackdown_types', array('smackdown' => 'smackdown'));
+  }
 }

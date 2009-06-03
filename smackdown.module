@@ -149,9 +149,11 @@ function smackdown_form_node_type_form_submit($form, $form_state) {
     }
   }
   else {
-    // format: type => type
-    $new_types = array_merge($current_types, array($form['#node_type']->type => $form['#node_type']->type));
-    variable_set('smackdown_types', $new_types);
+    if ($form_state['values']['smackdown_type_'. $form['#node_type']->type] === 1) {
+      // format: type => type
+      $new_types = array_merge($current_types, array($form['#node_type']->type => $form['#node_type']->type));
+      variable_set('smackdown_types', $new_types);
+    }
   }
 }
 
@@ -288,11 +290,11 @@ function smackdown_votingapi_results_alter(&$cache, $content_type, $content_id) 
   // no need to check type as no other node.type will have a tag of smackdown
   // so if $cache['smackdown'] doesn't exists, it doesn't do anything
   // NOTE: http://drupal.org/node/435782
-  if (isset($cache['smackdown'])) {
-    foreach ($cache['smackdown']['option'] as $option_id => $score) {
+  if (isset($cache[$content_type])) {
+    foreach ($cache[$content_type]['option'] as $option_id => $score) {
       $count += $score;
     }
   
-    $cache['smackdown']['option']['count'] = $count;
+    $cache[$content_type]['option']['count'] = $count;
   }
 }
