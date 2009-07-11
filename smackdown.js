@@ -19,8 +19,8 @@ Drupal.smackdown = function() {};
  *   The jQuery object to apply the behaviors to.
  */
 Drupal.behaviors.smackdown = function(context) {
-  var field_1 = '.field-' + Drupal.settings.smackdown.field1.name.replace('_', '-');
-  var field_2 = '.field-' + Drupal.settings.smackdown.field2.name.replace('_', '-');
+  var field_1 = '.field-' + Drupal.settings.smackdown.field1.name.replace(/_/g, '-');
+  var field_2 = '.field-' + Drupal.settings.smackdown.field2.name.replace(/_/g, '-');
   if (Drupal.settings.smackdownPerm == 1) {
     Drupal.smackdown.attachVote(context, '.' + field_1 + ' .field-item a');
     $(field_1 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field1.nid).addClass('smackdown-processed');

@@ -88,35 +88,38 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
 function smackdown_nodeapi(&$node, $op) {
   // make sure to only compare to the smackdown you are looking at in the URL
   if ($op == 'view' && in_array($node->type, variable_get('smackdown_types', array())) && $node->nid == arg(1)) {
-    if (user_access('vote on smackdowns')) {
-      drupal_add_js(array('smackdownPerm' => 1), 'setting');
-    }
-    drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
+    static $added = FALSE;
+    if (!$added) {
+      if (user_access('vote on smackdowns')) {
+        drupal_add_js(array('smackdownPerm' => 1), 'setting');
+      }
+      drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
 
-    $node_array = (array) $node;
-    $field_names = smackdown_get_nodereference_fields($node->type);
-    // setings for js
-    $settings = array(
-      'smackdown' => array(
-        'sid' => $node->nid,
-        'field1' => array(
-          'name' => $field_names[0],
-          'nid' => $node_array[$field_names[0]][0]['nid'],
+      $node_array = (array) $node;
+      $field_names = smackdown_get_nodereference_fields($node->type);
+      // setings for js
+      $settings = array(
+        'smackdown' => array(
+          'sid' => $node->nid,
+          'field1' => array(
+            'name' => $field_names[0],
+            'nid' => $node_array[$field_names[0]][0]['nid'],
+          ),
+          'field2' => array(
+            'name' => $field_names[1],
+            'nid' => $node_array[$field_names[1]][0]['nid'],
+          ),
         ),
-        'field2' => array(
-          'name' => $field_names[1],
-          'nid' => $node_array[$field_names[1]][0]['nid'],
-        ),
-      ),
-    );
-    drupal_add_js($settings, 'setting');
+      );
+      drupal_add_js($settings, 'setting');
     
-    // a log of previous votes are stored in $_COOKIE
-    if (isset($_SESSION['smackdown_vote'])) {
-      $prev_results = smackdown_results('short', node_load($_SESSION['smackdown_vote']));
-      unset($_SESSION['smackdown_vote']);
-      // append the results of the previous smackdown to $node->content
-      $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
+      // a log of previous votes are stored in $_COOKIE
+      if (isset($_SESSION['smackdown_vote'])) {
+        $prev_results = smackdown_results('short', node_load($_SESSION['smackdown_vote']));
+        unset($_SESSION['smackdown_vote']);
+        // append the results of the previous smackdown to $node->content
+        $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
+      }
     }
   }
 }
