@@ -39,7 +39,7 @@ function smackdown_menu() {
 
 function smackdown_results_access($node) {
   global $user;
-  if ($node->type == 'smackdown' && user_access('view smackdowns', $user)) {
+  if (in_array($node->type, variable_get('smackdown_types', array())) && user_access('view smackdowns', $user)) {
     return TRUE;
   }
   return FALSE;
