@@ -120,6 +120,7 @@ function smackdown_nodeapi(&$node, $op) {
         // append the results of the previous smackdown to $node->content
         $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
       }
+      $added = TRUE;
     }
   }
 }
