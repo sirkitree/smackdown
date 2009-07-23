@@ -173,5 +173,6 @@ function smackdown_views_default_views() {
     'weight' => 0,
   ));
   $views[$view->name] = $view;
+
   return $views;
 }

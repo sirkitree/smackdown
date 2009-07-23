@@ -42,21 +42,21 @@ Drupal.behaviors.smackdown = function(context) {
  */
 Drupal.smackdown.attachVote = function(context, selector) {
   $(selector, context).each(function() {
-    var $element = $(this);
+    var $element = $(this), smackdownLocation = Drupal.settings.basePath + Drupal.theme('smackdownLocation');
     // Attach the on-click popup behavior to the element.
     $element.click(function(e){
-      Drupal.theme.prototype.voting($element);
+      Drupal.theme('voting', $element);
       var nid = $element.attr('rel'); // not compatible with clean urls
       var sid = Drupal.settings.smackdown.sid;
       var params = {'cid':nid, 'sid':sid};
-      console.log(params);
       // post nid and context to smackdown/vote
       ajaxOptions = {
         url: Drupal.settings.basePath + 'smackdown/vote',
         dataType: 'json',
         data: params,
         success: function(json) {
-          location.href = Drupal.settings.basePath + 'node/' + sid + '/voting-results';
+          // we put the location into a variable so that it can be changed by other modules
+          location.href = smackdownLocation;
         }
       };
       $.ajax(ajaxOptions);
@@ -65,24 +65,28 @@ Drupal.smackdown.attachVote = function(context, selector) {
   });
 };
 
-Drupal.theme.prototype.voting = function(element) {
-  var output = "<div id='voting-indicator'>Voting...</div>";
-  element.parent().css({'background-color':'#ffc'});
-  return element.parent().append(output);
-};
-
 Drupal.smackdown.attachNotice = function(context, selector) {
   $(selector, context).each(function() {
     var $element = $(this);
     $element.click(function(e) {
-      Drupal.theme.prototype.notice($element);
+      Drupal.theme.('notice', $element);
       return false;
     });
   });
-}
+};
 
-Drupal.theme.prototype.notice = function(element) {
-  var output = "<div id='voting-indicator'>You do not have sufficient rights to vote.</div>";
+Drupal.theme.prototype.voting = function(element) {
+  var output = "<div id='voting-indicator'>" + Drupal.t('Voting...') + "</div>";
   element.parent().css({'background-color':'#ffc'});
   return element.parent().append(output);
+};
+
+Drupal.theme.prototype.notice = function(element) {
+  var output = "<div id='voting-indicator'>" + Drupal.t('You do not have sufficient rights to vote.') + "</div>";
+  element.parent().css({'background-color':'#ffc'});
+  return element.parent().append(output);
+};
+
+Drupal.theme.prototype.smackdownLocation = function() {
+  return Drupal.settings.smackdown.location;
 }

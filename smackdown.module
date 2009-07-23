@@ -109,6 +109,7 @@ function smackdown_nodeapi(&$node, $op) {
             'name' => $field_names[1],
             'nid' => $node_array[$field_names[1]][0]['nid'],
           ),
+          'location' => 'node/'. $node->nid .'/voting-results',
         ),
       );
       drupal_add_js($settings, 'setting');
