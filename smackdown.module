@@ -223,6 +223,9 @@ function smackdown_theme() {
         'prev_node' => NULL,
       ),
     ),
+    'smackdown_formatter_smackdown' => array(
+      'arguments' => array('element' => NULL),
+    ),
   );
 }
 
@@ -288,7 +291,7 @@ function smackdown_views_api() {
 }
 
 /**
- * Implementation of hook_votingapi_results_alter()
+ * Implementation of hook_votingapi_results_alter().
  */
 function smackdown_votingapi_results_alter(&$cache, $content_type, $content_id) {
   // count the number of votes on this smackdown
@@ -302,4 +305,50 @@ function smackdown_votingapi_results_alter(&$cache, $content_type, $content_id) 
   
     $cache[$content_type]['option']['count'] = $count;
   }
+}
+
+/**
+ * Implementation of hook_field_formatter_info().
+ */
+function smackdown_field_formatter_info() {
+  return array(
+    'smackdown' => array(
+      'label' => t('Smackdown reference'),
+      'field types' => array('nodereference'),
+      'multiple values' => CONTENT_HANDLE_CORE,
+      'description' => t('Display the referenced node according to the smackdown settings.'),
+    ),
+  );
+}
+
+/**
+ * Theme function for 'smackdown' nodereference field formatter.
+ * Copied from nodereference's theme_nodereference_formatter_full_teaser().
+ */
+function theme_smackdown_formatter_smackdown($element) {
+  static $recursion_queue = array();
+  $output = '';
+  if (!empty($element['#item']['nid']) && is_numeric($element['#item']['nid'])) {
+    $node = $element['#node'];
+    $field = content_fields($element['#field_name'], $element['#type_name']);
+    // If no 'referencing node' is set, we are starting a new 'reference thread'
+    if (!isset($node->referencing_node)) {
+      $recursion_queue = array();
+    }
+    $recursion_queue[] = $node->nid;
+    if (in_array($element['#item']['nid'], $recursion_queue)) {
+      // Prevent infinite recursion caused by reference cycles:
+      // if the node has already been rendered earlier in this 'thread',
+      // we fall back to 'default' (node title) formatter.
+      return theme('nodereference_formatter_default', $element);
+    }
+    if ($referenced_node = node_load($element['#item']['nid'])) {
+      $referenced_node->referencing_node = $node;
+      $referenced_node->referencing_field = $field;
+      _nodereference_titles($element['#item']['nid'], $referenced_node->title);
+      $output = node_view($referenced_node, $element['#formatter'] == 'teaser');
+    }
+  }
+  return $output;
+  
 }
