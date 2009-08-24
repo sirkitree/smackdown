@@ -69,7 +69,7 @@
     $(selector, context).each(function() {
       var $element = $(this);
       $element.click(function(e) {
-        Drupal.theme.('notice', $element);
+        Drupal.theme('notice', $element);
         return false;
       });
     });
