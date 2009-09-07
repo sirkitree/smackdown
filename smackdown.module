@@ -240,7 +240,10 @@ function theme_smackdown_results($node, $results) {
 
   $output = '<div class="poll">';
   if (isset($_GET['last'])) {
-    $output .= '<br><div class="messages notice"><div>'. t("No more smackdowns to vote on. Would you like to !create?", array('!create' => l('create one yourself', 'node/add/smackdown'))) .'</div></div>';
+    $type_name = node_get_types('name', $node);
+    $text = 'There are no more @type_name to vote on. The results from the previous one are below. !link';
+    $message = t($text, array('@type_name' => $type_name, '!link' => l(t('Click here to create your own @type_name', array('@type_name' => $type_name)), 'node/add/' . $node->type)));
+    $output .= '<br><div class="messages notice"><div>'. $message . '</div></div>';
   }
   foreach ($results as $nid => $node) {
     $percentage = $node[0]['value'] ? round(($node[0]['value'] / $votes) * 100) : 0;
