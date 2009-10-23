@@ -19,6 +19,23 @@ function smackdown_init() {
 }
 
 /**
+ * Implementation of hook_context_conditions().
+ */
+function smackdown_context_conditions() {
+  return array(
+    'smackdown' => array(
+      '#title' => t('Just Voted on a Smackdown'),
+      '#description' => t('Set this context when a user has just voted on a smackdown on the previous page'),
+      '#options' => array(
+        0 => t('Off'),
+        1 => t('On'),
+      ),
+      '#type' => 'radios',
+    ),
+  );
+}
+
+/**
  * Implementation of hook_perm().
  */
 function smackdown_perm() {
