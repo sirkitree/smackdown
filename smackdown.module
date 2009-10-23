@@ -8,12 +8,21 @@
  * Choose what content type to reference in the smackdown content type's
  * nodereference settings. (admin/content/node-type/smackdown/fields)
  */
+ 
+/**
+ * Implementation of hook_init().
+ */
+function smackdown_init() {
+  if ($_GET['smackdown_vote'] && module_exists('context')) {
+    context_set_by_condition('smackdown', TRUE);
+  }
+}
 
 /**
  * Implementation of hook_perm().
  */
 function smackdown_perm() {
-  return array('view smackdowns', 'vote on smackdowns');
+  return array('vote on smackdowns');
 }
 
 
@@ -21,26 +30,36 @@ function smackdown_perm() {
  * Implementation of hook_menu().
  */
 function smackdown_menu() {
-  $items['smackdown/vote'] = array(
+  $items['smackdown/vote/%smackdown_token'] = array(
     'page callback'     => 'smackdown_vote',
     'access arguments'  => array('vote on smackdowns'),
     'type'              => MENU_CALLBACK,
   );
-  $items['node/%node/voting-results'] = array(
+  $items['node/%smackdown/voting-results'] = array(
     'title'             => 'Results',
     'page callback'     => 'smackdown_results',
     'page arguments'    => array('page', 1),
-    'access callback'   => 'smackdown_results_access',
-    'access arguments'  => array(1),
+    'access callback'   => 'node_access',
+    'access arguments'  => array('view', 1),
     'type'              => MENU_LOCAL_TASK,
   );
   return $items;
 }
 
-function smackdown_results_access($node) {
-  global $user;
-  if (in_array($node->type, variable_get('smackdown_types', array())) && user_access('view smackdowns', $user)) {
-    return TRUE;
+/**
+ * Menu load function to do a token verification
+ */
+function smackdown_token_load($token) {
+  return drupal_valid_token($token, $_GET['sid']);
+}
+
+/**
+ * Menu load function to verify the node is a smackdown
+ */
+function smackdown_load($nid) {
+  $node = node_load($nid);
+  if (in_array($node->type, variable_get('smackdown_types', array()))) {
+    return $node;
   }
   return FALSE;
 }
@@ -69,15 +88,14 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
       'value'         => $cid,
       'value_type'    => 'option',
       'tag'           => 'smackdown',
+      'location'      => "node/$sid/voting-results",
     );
+    drupal_alter('smackdown_vote', $vote);
+    $location = url($vote['location'], array('absolute' => TRUE, 'query' => "smackdown_vote=$sid"));
     // Save voting results.
     $results = votingapi_set_votes($vote);
-    
-    // Set user session var to include this $nid
-    $_SESSION['smackdown_vote'] = $sid;
 
-    drupal_set_header('text/javascript');
-    print drupal_to_js(array('results' => $results));
+    drupal_json(array('results' => $results, 'location' => $location));
     exit();
   }
 }
@@ -85,9 +103,9 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
 /**
  * Implementation of hook_nodeapi().
  */
-function smackdown_nodeapi(&$node, $op) {
+function smackdown_nodeapi(&$node, $op, $a3, $page = FALSE) {
   // make sure to only compare to the smackdown you are looking at in the URL
-  if ($op == 'view' && in_array($node->type, variable_get('smackdown_types', array())) && $node->nid == arg(1)) {
+  if ($op == 'view' && in_array($node->type, variable_get('smackdown_types', array())) && $page) {
     static $added = FALSE;
     if (!$added) {
       if (user_access('vote on smackdowns')) {
@@ -110,14 +128,14 @@ function smackdown_nodeapi(&$node, $op) {
             'nid' => $node_array[$field_names[1]][0]['nid'],
           ),
           'location' => 'node/'. $node->nid .'/voting-results',
+          'token' => drupal_get_token($node->nid),
         ),
       );
       drupal_add_js($settings, 'setting');
     
-      // a log of previous votes are stored in $_COOKIE
-      if (isset($_SESSION['smackdown_vote'])) {
-        $prev_results = smackdown_results('short', node_load($_SESSION['smackdown_vote']));
-        unset($_SESSION['smackdown_vote']);
+      // a log of previous votes are stored in $_GET
+      if (isset($_GET['smackdown_vote'])) {
+        $prev_results = smackdown_results('short', node_load($_GET['smackdown_vote']));
         // append the results of the previous smackdown to $node->content
         $node->content['prev_results'] = array('#value' => $prev_results, '#weight' => $node->content['body']['#weight']--);
       }

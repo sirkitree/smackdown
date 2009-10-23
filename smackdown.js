@@ -44,7 +44,7 @@
    */
   Drupal.smackdown.attachVote = function(context, selector) {
     $(selector, context).each(function() {
-      var $element = $(this), smackdownLocation = Drupal.settings.basePath + Drupal.theme('smackdownLocation');
+      var $element = $(this);
       // Attach the on-click popup behavior to the element.
       $element.click(function(e){
         Drupal.theme('voting', $element);
@@ -53,12 +53,12 @@
         var params = {'cid':nid, 'sid':sid};
         // post nid and context to smackdown/vote
         ajaxOptions = {
-          url: Drupal.settings.basePath + 'smackdown/vote',
+          url: Drupal.settings.basePath + 'smackdown/vote/' + Drupal.settings.smackdown.token,
           dataType: 'json',
           data: params,
           success: function(json) {
             // we put the location into a variable so that it can be changed by other modules
-            location.href = smackdownLocation;
+            location.href = json.location
           }
         };
         $.ajax(ajaxOptions);
@@ -88,9 +88,4 @@
     element.parent().css({'background-color':'#ffc'});
     return element.parent().append(output);
   };
-
-  Drupal.theme.prototype.smackdownLocation = function() {
-    return Drupal.settings.smackdown.location;
-  };
-
 })(jQuery);
