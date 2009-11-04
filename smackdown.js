@@ -23,9 +23,9 @@
       var field_1 = '.field-' + Drupal.settings.smackdown.field1.name.replace(/_/g, '-');
       var field_2 = '.field-' + Drupal.settings.smackdown.field2.name.replace(/_/g, '-');
       if (Drupal.settings.smackdownPerm == 1) {
-        Drupal.smackdown.attachVote(context, '.' + field_1 + ' .field-item a');
+        Drupal.smackdown.attachVote(context, field_1 + ' .field-item a');
         $(field_1 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field1.nid).addClass('smackdown-processed');
-        Drupal.smackdown.attachVote(context, '.' + field_2 + ' .field-item a');
+        Drupal.smackdown.attachVote(context, field_2 + ' .field-item a');
         $(field_2 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field2.nid).addClass('smackdown-processed');
       }
       else {
