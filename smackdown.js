@@ -29,8 +29,8 @@
         $(field_2 + ' .field-item a').attr('rel', Drupal.settings.smackdown.field2.nid).addClass('smackdown-processed');
       }
       else {
-        Drupal.smackdown.attachNotice(context, '.' + field_1 + ' .field-item a');
-        Drupal.smackdown.attachNotice(context, '.' + field_2 + ' .field-item a');
+        Drupal.smackdown.attachNotice(context, field_1 + ' .field-item a');
+        Drupal.smackdown.attachNotice(context, field_2 + ' .field-item a');
       }
     }
   };
