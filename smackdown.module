@@ -67,7 +67,7 @@ function smackdown_menu() {
  * Menu load function to do a token verification
  */
 function smackdown_token_load($token) {
-  return drupal_valid_token($token, $_GET['sid']);
+  return drupal_valid_token($token, $_GET['sid'], TRUE);
 }
 
 /**
