@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * Smackdown voting through AJAX
