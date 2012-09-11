@@ -67,14 +67,14 @@ function smackdown_menu() {
 }
 
 /**
- *Menu load function to do a token verification. 
+ * Menu load function to do a token verification. 
  */
 function smackdown_token_load($token){
-  return drupal_valid_token($token,$_GET['sid'],TRUE);
+  return drupal_valid_token($token, $_GET['sid'], TRUE);
 }
 
 /**
-  *Menu load function to verify a node is a smackdown. 
+  * Menu load function to verify a node is a smackdown. 
   */
 function smackdown_load($nid){
   $node = node_load($nid);
@@ -121,10 +121,10 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
 }
 
 /**
- *Implements hook_node_view(). 
+ * Implements hook_node_view(). 
  */
 
-function smackdown_node_view($node,$build_mode = 'full'){
+function smackdown_node_view($node, $build_mode = 'full'){
   // make sure to only compare to the smackdown you are looking at in the URL
   if (in_array($node->type, variable_get('smackdown_types', array()))) {
     static $added = FALSE;
@@ -168,7 +168,7 @@ function smackdown_node_view($node,$build_mode = 'full'){
 /**
  *Implements hook_form_FORM_ID_alter().
  */
-function smackdown_form_node_type_form_alter(&$form, &$form_state,$form_id = 'node_type') {
+function smackdown_form_node_type_form_alter(&$form, &$form_state, $form_id = 'node_type') {
   // Add in a checkbox to designate a content type as a smackdown node.
   // @todo: link for doc about the makeup of a smackdown node in #description
   $form['smackdown_type_'. $form['#node_type']->type] = array(
