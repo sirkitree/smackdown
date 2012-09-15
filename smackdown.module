@@ -115,7 +115,7 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
     // Save voting results.
     $results = votingapi_set_votes($vote);
 
-    drupal_json(array('results' => $results, 'location' => $location));
+    drupal_json_output(array('results' => $results, 'location' => $location));
     exit();
   }
 }
@@ -130,7 +130,7 @@ function smackdown_node_view($node, $build_mode = 'full'){
     static $added = FALSE;
     if (!$added) {
       if (user_access('vote on smackdowns')) {
-        drupal_add_js(array('smackdownPerm' => 1), 'setting');
+        drupal_add_js(array('smackdownPerm' => 1), array('type' => 'setting'));
       }
       drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
 
@@ -152,7 +152,7 @@ function smackdown_node_view($node, $build_mode = 'full'){
           'token' => drupal_get_token($node->nid),
         ),
       );
-      drupal_add_js($settings, 'setting');
+      drupal_add_js($settings, array('type' => 'setting'));
 
       // a log of previous votes are stored in $_GET
       if (isset($_GET['smackdown_vote'])) {
