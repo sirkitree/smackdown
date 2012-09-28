@@ -7,12 +7,12 @@
  * Choose what content type to reference in the smackdown content type's
  * nodereference settings. (admin/content/node-type/smackdown/fields)
  */
- 
+
 /**
  * Implementation of hook_init().
  */
 function smackdown_init() {
-  if (module_exists('context')) {
+  if ($_GET['smackdown_vote'] && module_exists('context')) {
     context_set_by_condition('smackdown', TRUE);
   }
 }
@@ -67,14 +67,14 @@ function smackdown_menu() {
 }
 
 /**
- * Menu load function to do a token verification. 
+ * Menu load function to do a token verification.
  */
 function smackdown_token_load($token){
   return drupal_valid_token($token, $_GET['sid'], TRUE);
 }
 
 /**
-  * Menu load function to verify a node is a smackdown. 
+  * Menu load function to verify a node is a smackdown.
   */
 function smackdown_load($nid){
   $node = node_load($nid);
@@ -115,44 +115,44 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
     // Save voting results.
     $results = votingapi_set_votes($vote);
 
-    drupal_json(array('results' => $results, 'location' => $location));
-    exit();
+    drupal_json_output(array('results' => $results, 'location' => $location));
   }
 }
 
 /**
- * Implements hook_node_view(). 
+ * Implements hook_node_view().
  */
 
 function smackdown_node_view($node, $build_mode = 'full'){
   // make sure to only compare to the smackdown you are looking at in the URL
   if (in_array($node->type, variable_get('smackdown_types', array()))) {
     static $added = FALSE;
+    drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
     if (!$added) {
       if (user_access('vote on smackdowns')) {
         drupal_add_js(array('smackdownPerm' => 1), 'setting');
       }
-      drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
 
-      $node_array = (array) $node;
       $field_names = smackdown_get_nodereference_fields($node->type);
+      $field_value_one = field_fetch_field_values('node', $node, $field_names[0]);
+      $field_value_two = field_fetch_field_values('node', $node, $field_names[1]);
       // setings for js
       $settings = array(
         'smackdown' => array(
           'sid' => $node->nid,
           'field1' => array(
             'name' => $field_names[0],
-            'nid' => $node_array[$field_names[0]][0]['nid'],
+            'nid' => $field_value_one->nid,
           ),
           'field2' => array(
             'name' => $field_names[1],
-            'nid' => $node_array[$field_names[1]][0]['nid'],
+            'nid' => $field_value_two->nid,
           ),
           'location' => 'node/'. $node->nid .'/voting-results',
           'token' => drupal_get_token($node->nid),
         ),
       );
-      drupal_add_js($settings, 'setting');
+      drupal_add_js($settings,'setting');
 
       // a log of previous votes are stored in $_GET
       if (isset($_GET['smackdown_vote'])) {
@@ -166,7 +166,7 @@ function smackdown_node_view($node, $build_mode = 'full'){
 }
 
 /**
- *Implements hook_form_FORM_ID_alter().
+ * Implements hook_form_FORM_ID_alter().
  */
 function smackdown_form_node_type_form_alter(&$form, &$form_state, $form_id = 'node_type') {
   // Add in a checkbox to designate a content type as a smackdown node.
@@ -208,38 +208,41 @@ function smackdown_form_node_type_form_submit($form, $form_state) {
  *   The node object of the smackdown we want results for.
  */
 function smackdown_results($view, $node) {
-  $node_array = (array) $node;
+  $results = array();
   foreach (smackdown_get_nodereference_fields($node->type) as $field_name) {
-    $ref = $node_array[$field_name];
+    $ref = field_fetch_values('node', $node, $field_name);
     $criteria = array(
-      'content_type' => 'node',
-      'content_id' => $node->nid,
+      'entity_type' => 'node',
+      'entity_id' => $node->nid,
       'tag' => 'smackdown',
       'function' => 'option-'. $ref[0]['nid'],
     );
-    $results[$ref[0]['nid']] = votingapi_select_results($criteria);
-    $results[$ref[0]['nid']]['title'] = node_load($ref[0]['nid'])->title;
+    $results[$ref->nid] = votingapi_select_results($criteria);
+    $results[$ref->nid]['title'] = node_load($ref[0]['nid'])->title;
   }
+  
+  $variables = array('node' => $node, 'results' => $results);
 
   if ($view == 'short') {
-    return theme('smackdown_results_short', $node, $results);
+    return theme('smackdown_results_short', $variables);
   }
   else {
-    return theme('smackdown_results', $node, $results);
+    return theme('smackdown_results', $variables);
   }
 }
 
 /**
  * Helper function to get the nodereference fields of a content type.
  * @param string $content_type
- * @return array of field names that are nodereference fields 
+ * @return array of field names that are nodereference fields
  */
 function smackdown_get_nodereference_fields($content_type) {
   $fields = array();
-  $full_type_definition = content_types($content_type);
-  foreach ($full_type_definition['fields'] as $field) {
-    if ($field['type'] == 'nodereference') {
-      $fields[] = $field['field_name'];
+  foreach (field_info_instances('node', $content_type) as $field_name => $field) {
+    $field_info = field_info_field($field_name);
+    $type = $field_info['type'];
+    if($type == 'node_reference') {
+      $fields[] = $field['label'];
     }
   }
   return $fields;
@@ -268,11 +271,15 @@ function smackdown_theme() {
   );
 }
 
-function theme_smackdown_results($node, $results) {
-  $node_array = (array) $node;
+function theme_smackdown_results($variables) {
+
+  $node = $variables['node'];
+  $results = $variables['results'];
   $field_names = smackdown_get_nodereference_fields($node->type);
-  $node_ref1 = $node_array[$field_names[0]][0]['nid'];
-  $node_ref2 = $node_array[$field_names[1]][0]['nid'];
+  $field_value_one = field_fetch_field_values('node', $node, $fiel_names[0]);
+  $field_value_two = field_fetch_field_values('node', $node, $field_names[1]);
+  $node_ref1 = $field_value_one->nid;
+  $node_ref2 = $field_value_two->nid;
 
   // turn the results into a percentage
   $votes = $results[$node_ref1][0]['value'] + $results[$node_ref2][0]['value'];
@@ -381,7 +388,7 @@ function theme_smackdown_formatter_smackdown($element) {
       // Prevent infinite recursion caused by reference cycles:
       // if the node has already been rendered earlier in this 'thread',
       // we fall back to 'default' (node title) formatter.
-      return theme('nodereference_formatter_default', $element);
+      return theme('node_reference_default', $element);
     }
     if ($referenced_node = node_load($element['#item']['nid'])) {
       $referenced_node->referencing_node = $node;
@@ -393,3 +400,15 @@ function theme_smackdown_formatter_smackdown($element) {
   return $output;
 
 }
+
+/**
+ * Returns field values as actual entities where possible,
+ * also allows selection of individual items to be returned
+ */
+function field_fetch_field_values($entity_type, $entity, $field_name) {
+  $value = field_get_items($entity_type, $entity, $field_name);
+  $node = value[0]['nid'];
+  $node_load = node_load($node);
+  return $node_load;
+}
+
