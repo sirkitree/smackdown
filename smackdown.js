@@ -23,14 +23,12 @@
         var field_1 = 'field field-name-' + Drupal.settings.smackdown.field1.name.replace(/_/g, '-');
         var field_2 = 'field field-name-' + Drupal.settings.smackdown.field2.name.replace(/_/g, '-');
         if (Drupal.settings.smackdownPerm == 1) {
-          Drupal.smackdown.attachVote(context, field_1 + ' field-type-node-reference field-label-above');
-          $(field_1 + ' field-type-node-reference field-label-above').attr('rel', Drupal.settings.smackdown.field1.nid).addClass('smackdown-processed');
-          Drupal.smackdown.attachVote(context, field_2 + ' field-type-node-reference field-label-above');
-          $(field_2 + ' field-type-node-reference field-label-above').attr('rel', Drupal.settings.smackdown.field2.nid).addClass('smackdown-processed');
+          Drupal.smackdown.attachVote(context, field_1 + ' field-type-node-reference', Drupal.settings.smackdown.field1.nid);
+          Drupal.smackdown.attachVote(context, field_2 + ' field-type-node-reference', Drupal.settings.smackdown.field2.nid);
         }
         else {
-          Drupal.smackdown.attachNotice(context, field_1 + ' field-type-node-reference field-label-above');
-          Drupal.smackdown.attachNotice(context, field_2 + ' field-type-node-reference field-label-above');
+          Drupal.smackdown.attachNotice(context, field_1 + ' field-type-node-reference');
+          Drupal.smackdown.attachNotice(context, field_2 + ' field-type-node-reference');
         }
       }
   };
@@ -40,12 +38,14 @@
    *
    * @param context
    * @param selector
+   * @param nid
    *   jQuery selector for links to attach behavior to.
    */
   Drupal.smackdown.attachVote = function(context, selector) {
-    $('div').each(function() {
-      if($(this).hasClass(selector)) {
-        var $element = $(this);
+    // a regex for selecting the correct selector
+    $('div[class^="'+selector+'"]').each(function() {
+        var $element = $(this).find('.field-items').children();
+	$element.attr('rel', nid).addClass('smackdown-processed');
 	$element.click(function(e) {
 	  Drupal.theme('voting', $element);
 	  var nid = $element.attr('rel'); //not compatible with clean URLs
@@ -57,13 +57,14 @@
 	    data: params,
 	    success: function(json) {
 	      //we put the location into a variable so that it can be changes by other modules.
-	      location.href = json.location
+	      if(json != null){
+	      	location.href = json.location;
+	      }
 	    }		
 	  };
 	 $.ajax(ajaxOptions);
 	 return false;
 	}); 
-       }
      });
   };
 
