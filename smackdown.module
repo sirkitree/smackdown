@@ -12,7 +12,7 @@
  * Implementation of hook_init().
  */
 function smackdown_init() {
-  if ($_GET['smackdown_vote'] && module_exists('context')) {
+  if (isset($_GET['smackdown_vote']) && module_exists('context')) {
     context_set_by_condition('smackdown', TRUE);
   }
 }
