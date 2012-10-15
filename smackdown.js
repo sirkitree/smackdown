@@ -31,6 +31,7 @@
           Drupal.smackdown.attachNotice(context, field_2 + ' field-type-node-reference');
         }
       }
+    }
   };
 
   /**
@@ -44,28 +45,28 @@
   Drupal.smackdown.attachVote = function(context, selector) {
     // a regex for selecting the correct selector
     $('div[class^="'+selector+'"]').each(function() {
-        var $element = $(this).find('.field-items').children();
-	$element.attr('rel', nid).addClass('smackdown-processed');
-	$element.click(function(e) {
-	  Drupal.theme('voting', $element);
-	  var nid = $element.attr('rel'); //not compatible with clean URLs
-	  var sid = Druapl.settings.smackdown.sid;
-	  var parms = {'cid':nid, 'sid':sid};
-	  ajaxOptions = {
-	    url: Drupal.settings.basePath + '?q=smackdown/vote/' + Drupal.settings.smackdown.token,
-	    dataType: 'json',
-	    data: params,
-	    success: function(json) {
-	      //we put the location into a variable so that it can be changes by other modules.
-	      if(json != null){
-	      	location.href = json.location;
-	      }
-	    }		
-	  };
-	 $.ajax(ajaxOptions);
-	 return false;
-	}); 
-     });
+      var $element = $(this).find('.field-items').children();
+    	$element.attr('rel', nid).addClass('smackdown-processed');
+    	$element.click(function(e) {
+    	  Drupal.theme('voting', $element);
+    	  var nid = $element.attr('rel'); //not compatible with clean URLs
+    	  var sid = Druapl.settings.smackdown.sid;
+    	  var parms = {'cid':nid, 'sid':sid};
+    	  ajaxOptions = {
+    	    url: Drupal.settings.basePath + '?q=smackdown/vote/' + Drupal.settings.smackdown.token,
+    	    dataType: 'json',
+    	    data: params,
+    	    success: function(json) {
+    	      //we put the location into a variable so that it can be changes by other modules.
+    	      if(json != null){
+    	      	location.href = json.location;
+    	      }
+    	    }
+    	  };
+    	 $.ajax(ajaxOptions);
+    	 return false;
+    	});
+    });
   };
 
   Drupal.smackdown.attachNotice = function(context, selector) {
