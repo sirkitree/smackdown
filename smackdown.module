@@ -220,7 +220,7 @@ function smackdown_results($view, $node) {
     $results[$ref->nid] = votingapi_select_results($criteria);
     $results[$ref->nid]['title'] = node_load($ref[0]['nid'])->title;
   }
-  
+
   $variables = array('node' => $node, 'results' => $results);
 
   if ($view == 'short') {
@@ -407,7 +407,7 @@ function theme_smackdown_formatter_smackdown($element) {
  */
 function field_fetch_field_values($entity_type, $entity, $field_name) {
   $value = field_get_items($entity_type, $entity, $field_name);
-  $node = value[0]['nid'];
+  $node = $value[0]['nid'];
   $node_load = node_load($node);
   return $node_load;
 }
