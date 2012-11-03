@@ -281,19 +281,26 @@ function smackdown_theme() {
   );
 }
 
+/**
+ * Theme the results of the votes.
+ */
 function theme_smackdown_results($variables) {
-
   $node = $variables['node'];
   $results = $variables['results'];
   $field_names = smackdown_get_nodereference_fields($node->type);
+
   $field_value_one = field_fetch_field_values('node', $node, $field_names[0]);
   $field_value_two = field_fetch_field_values('node', $node, $field_names[1]);
+  $field_values = array($field_value_one, $field_value_two);
+
   $node_ref1 = $field_value_one->nid;
   $node_ref2 = $field_value_two->nid;
 
-  // turn the results into a percentage
-  $votes = $results[$node_ref1][0]['value'] + $results[$node_ref2][0]['value'];
-
+  // Turn the results into a percentage.
+  // Note that there might be an empty result in case of no votes.
+  $first_result_val = (empty($results[$node_ref1][0]) ? 0 : $results[$node_ref1][0]['value']);
+  $second_result_val = (empty($results[$node_ref2][0]) ? 0 : $results[$node_ref2][0]['value']);
+  $votes = $first_result_val + $second_result_val;
 
   $output = '<div class="poll">';
   if (isset($_GET['last'])) {
@@ -304,7 +311,8 @@ function theme_smackdown_results($variables) {
   }
 
   foreach ($results as $nid => $node) {
-    $percentage = $node[0]['value'] ? round(($node[0]['value'] / $votes) * 100) : 0;
+    $node_val = (empty($node[0]) ? 0 : $node[0]['value']);
+    $percentage = $node_val ? round(($node_val / $votes) * 100) : 0;
     $output .= '
     <div class="text">'. l($node['title'], 'node/'. $nid) .'</div>
     <div class="bar">
