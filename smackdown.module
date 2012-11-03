@@ -54,7 +54,8 @@ function smackdown_menu() {
   $items['smackdown/vote/%smackdown_token'] = array(
     'title' => 'Vote',
     'page callback'     => 'smackdown_vote',
-    'access arguments'  => array('vote on smackdowns'),
+    'access_callback'   => 'smackdown_access',
+    'access_arguments'  => array(2),
     'type'              => MENU_CALLBACK,
   );
   $items['node/%smackdown/voting-results'] = array(
@@ -69,12 +70,13 @@ function smackdown_menu() {
 }
 
 /**
- * Menu load function to do a token verification.
+ * Menu access callback.
  */
-function smackdown_token_load($token){
-  $temp = base_path() + '?q=smackdown/vote/' + $token;
-  $token = parse_url($temp); 
-  return drupal_valid_token($token,$_GET['sid'],TRUE);
+function smackdown_access($token) {
+  if (user_access('vote on smackdowns')) {
+    return drupal_valid_token($token, $_GET['sid'], TRUE);
+  }
+  return FALSE;
 }
 
 /**
@@ -226,7 +228,7 @@ function smackdown_results($view, $node) {
   }
 
   $variables = array('node' => $node, 'results' => $results);
-  
+
   if ($view == 'short') {
     return theme('smackdown_results_short', $variables);
   }
@@ -287,7 +289,7 @@ function theme_smackdown_results($variables) {
 
   // turn the results into a percentage
   $votes = $results[$node_ref1][0]['value'] + $results[$node_ref2][0]['value'];
-  
+
 
   $output = '<div class="poll">';
   if (isset($_GET['last'])) {
@@ -296,7 +298,7 @@ function theme_smackdown_results($variables) {
     $message = t($text, array('@type_name' => $type_name, '!link' => l(t('Click here to create your own @type_name', array('@type_name' => $type_name)), 'node/add/' . $node->type)));
     $output .= '<br><div class="messages notice"><div>'. $message . '</div></div>';
   }
-  
+
   foreach ($results as $nid => $node) {
     $percentage = $node[0]['value'] ? round(($node[0]['value'] / $votes) * 100) : 0;
     $output .= '
@@ -315,7 +317,7 @@ function theme_smackdown_results($variables) {
 function theme_smackdown_results_short($variables) {
   $node = $variables['node'];
   $results = $variables['results'];
-  
+
   $field_names = smackdown_get_nodereference_fields($node->type);
   $field_value_one = field_fetch_field_values('node', $node, $field_names[0]);
   $field_value_two = field_fetch_field_values('node', $node, $field_names[1]);
