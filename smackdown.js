@@ -18,18 +18,17 @@
    *   The jQuery object to apply the behaviors to.
    */
   Drupal.behaviors.smackdown = {
-      attach: function(context, settings) {
-        if (typeof Drupal.settings.smackdown !== 'undefined') {
-            var field_1 = 'field field-name-' + Drupal.settings.smackdown.field1.name.replace(/_/g, '-');
-            var field_2 = 'field field-name-' + Drupal.settings.smackdown.field2.name.replace(/_/g, '-');
-            if (Drupal.settings.smackdownPerm == 1) {
-                Drupal.smackdown.attachVote(context, field_1 + ' field-type-node-reference', Drupal.settings.smackdown.field1.nid);
-                Drupal.smackdown.attachVote(context, field_2 + ' field-type-node-reference', Drupal.settings.smackdown.field2.nid);
-            }
-        else {
-            Drupal.smackdown.attachNotice(context, field_1 + ' field-type-node-reference field-label-above');
-            Drupal.smackdown.attachNotice(context, field_2 + ' field-type-node-reference field-label-above');
+    attach: function(context, settings) {
+      if (typeof Drupal.settings.smackdown !== 'undefined') {
+        var field_1 = 'field field-name-' + Drupal.settings.smackdown.field1.name.replace(/_/g, '-');
+        var field_2 = 'field field-name-' + Drupal.settings.smackdown.field2.name.replace(/_/g, '-');
+        if (Drupal.settings.smackdownPerm == 1) {
+          Drupal.smackdown.attachVote(context, field_1 + ' field-type-node-reference', Drupal.settings.smackdown.field1.nid);
+          Drupal.smackdown.attachVote(context, field_2 + ' field-type-node-reference', Drupal.settings.smackdown.field2.nid);
         }
+      } else {
+        Drupal.smackdown.attachNotice(context, field_1 + ' field-type-node-reference field-label-above');
+        Drupal.smackdown.attachNotice(context, field_2 + ' field-type-node-reference field-label-above');
       }
     }
   };
@@ -44,28 +43,27 @@
    */
   Drupal.smackdown.attachVote = function(context, selector, nid) {
     //a regex for selecting the correct selector
-    $('div[class^="'+selector+'"]').each(function() {
-        var $element = $(this).find('.field-items').children();
-        $element.attr('rel', nid).addClass('smackdown-processed');
-        
-        // Attach the on-click popup behavior to the element.
-        $element.click(function(e){
-           
+    $('div[class^="' + selector + '"]').each(function() {
+      var $element = $(this).find('.field-items').children();
+      $element.attr('rel', nid).addClass('smackdown-processed');
+
+      // Attach the on-click popup behavior to the element.
+      $element.click(function(e){
         Drupal.theme('voting', $element);
         var nid = $element.attr('rel'); // not compatible with clean urls
         var sid = Drupal.settings.smackdown.sid;
         var params = {'cid':nid, 'sid':sid};
         // post nid and context to smackdown/vote
         $.ajax({
-          url: Drupal.settings.basePath+ '?q=smackdown/vote/' + Drupal.settings.smackdown.token,
+          url: Drupal.settings.basePath + 'smackdown/vote/' + Drupal.settings.smackdown.token,
           dataType: 'json',
           data: params,
           success: function(json) {
-              alert("Success");
-              //location.href = json.location;
+            alert("Success");
+            //location.href = json.location;
           },
           error: function() {
-           alert("Error");   
+            alert("Error");
           }
         });
         return false;
