@@ -2,5 +2,6 @@ name = Smackdown
 description = Allows X vs. Y kind of pairings, and allows users to vote on their favorite.
 package = Voting
 dependencies[] = votingapi
+dependencies[] = references
 dependencies[] = node_reference
 core = 7.x
