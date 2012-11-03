@@ -69,7 +69,7 @@ function smackdown_menu() {
 }
 
 /**
- *Menu load function to do a token verification.
+ * Menu load function to do a token verification.
  */
 function smackdown_token_load($token){
   $temp = base_path() + '?q=smackdown/vote/' + $token;
@@ -78,7 +78,7 @@ function smackdown_token_load($token){
 }
 
 /**
-  *Menu load function to verify a node is a smackdown.
+  * Menu load function to verify a node is a smackdown.
   */
 function smackdown_load($nid){
   $node = node_load($nid);
@@ -123,7 +123,7 @@ function smackdown_vote($cid = NULL, $sid = NULL) {
 }
 
 /**
- *Implements hook_node_view().
+ * Implements hook_node_view().
  */
 
 function smackdown_node_view($node,$build_mode = 'full') {
@@ -242,7 +242,7 @@ function smackdown_results($view, $node) {
  */
 function smackdown_get_nodereference_fields($content_type) {
   $fields = array();
-  foreach (field_info_instances('node',$content_type) as $field_name => $field) {
+  foreach (field_info_instances('node', $content_type) as $field_name => $field) {
     $field_info = field_info_field($field_name);
     $type = $field_info['type'];
     if($type == 'node_reference'){
