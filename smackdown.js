@@ -48,22 +48,16 @@
       $element.attr('rel', nid).addClass('smackdown-processed');
 
       // Attach the on-click popup behavior to the element.
-      $element.click(function(e){
+      $element.click(function(e) {
         Drupal.theme('voting', $element);
         var nid = $element.attr('rel'); // not compatible with clean urls
         var sid = Drupal.settings.smackdown.sid;
-        var params = {'cid':nid, 'sid':sid};
         // post nid and context to smackdown/vote
         $.ajax({
-          url: Drupal.settings.basePath + 'smackdown/vote/' + Drupal.settings.smackdown.token,
+          url: Drupal.settings.basePath + 'smackdown/vote/' + sid + '/' + nid + '/' + Drupal.settings.smackdown.token,
           dataType: 'json',
-          data: params,
           success: function(json) {
-            alert("Success");
-            //location.href = json.location;
-          },
-          error: function() {
-            alert("Error");
+            location.href = json.location;
           }
         });
         return false;

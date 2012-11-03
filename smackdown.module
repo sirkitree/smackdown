@@ -51,11 +51,12 @@ function smackdown_permission() {
  */
 function smackdown_menu() {
   $items = array();
-  $items['smackdown/vote/%smackdown_token'] = array(
+  $items['smackdown/vote'] = array(
     'title' => 'Vote',
     'page callback'     => 'smackdown_vote',
-    'access_callback'   => 'smackdown_access',
-    'access_arguments'  => array(2),
+    'page arguments'    => array(2, 3),
+    'access callback'   => 'smackdown_access',
+    'access arguments'  => array(4, 2),
     'type'              => MENU_CALLBACK,
   );
   $items['node/%smackdown/voting-results'] = array(
@@ -72,9 +73,9 @@ function smackdown_menu() {
 /**
  * Menu access callback.
  */
-function smackdown_access($token) {
+function smackdown_access($token, $sid) {
   if (user_access('vote on smackdowns')) {
-    return drupal_valid_token($token, $_GET['sid'], TRUE);
+    return drupal_valid_token($token, $sid, TRUE);
   }
   return FALSE;
 }
@@ -99,43 +100,46 @@ function smackdown_load($nid){
  * @param $sid
  *   Smackdown node id.
  */
-function smackdown_vote($cid = NULL, $sid = NULL) {
+function smackdown_vote($sid = NULL, $cid = NULL) {
   if (!$cid) {
     $cid = $_GET['cid'];
   }
   if (!$sid) {
     $sid = $_GET['sid'];
   }
+  $return = is_numeric($cid);
   if (is_numeric($cid) && is_numeric($sid)) {
     // contruct our $vote array
     $vote = array(
       'entity_type'  => 'node',
       'entity_id'    => $sid,
-      'value_type'    => 'option',
-      'tag'           => 'smackdown',
-      'location'      => "node/$sid/voting-results",
+      'value_type'   => 'option',
+      'value'        => $cid,
+      'tag'          => 'smackdown',
     );
     drupal_alter('smackdown_vote', $vote);
-    $location = url($vote['location'], array('absolute' => TRUE, 'query' => array('smackdown_vote' => $sid)));
+    $location = url('node/' . $sid . '/voting-results', array('absolute' => TRUE));
     // Save voting results.
     $results = votingapi_set_votes($vote);
 
     drupal_json_output(array('results' => $results, 'location' => $location));
+  }
+  else {
+    drupal_json_output(array('return' => $return));
   }
 }
 
 /**
  * Implements hook_node_view().
  */
-
-function smackdown_node_view($node,$build_mode = 'full') {
+function smackdown_node_view($node, $build_mode = 'full') {
   // make sure to only compare to the smackdown you are looking at in the URL
   if (in_array($node->type, variable_get('smackdown_types', array()))) {
     static $added = FALSE;
     drupal_add_js(drupal_get_path('module', 'smackdown') .'/smackdown.js');
     if (!$added) {
       if (user_access('vote on smackdowns')) {
-        drupal_add_js(array('smackdownPerm' => 1),'setting');
+        drupal_add_js(array('smackdownPerm' => 1), 'setting');
       }
 
       $field_names = smackdown_get_nodereference_fields($node->type);
